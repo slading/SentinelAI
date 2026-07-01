@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  sentinelai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: sentinelai-engine:2.4.0
+    container_name: sentinelai-core
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=SentinelAI Compliance Command
+      - ENVIRONMENT=production
+      # Override or pass API key via host shell or .env file
+      - GROQ_API_KEY=${GROQ_API_KEY:-gsk_mock_key_for_local_execution}
+    volumes:
+      # Persistent storage mounts for audit trails, cases, and deliverables
+      - ./SentinelAI/logs:/app/SentinelAI/logs
+      - ./SentinelAI/cases:/app/SentinelAI/cases
+      - ./SentinelAI/verdicts:/app/SentinelAI/verdicts
+      - ./SentinelAI/tickets:/app/SentinelAI/tickets
+      - ./SentinelAI/emails:/app/SentinelAI/emails
+      - ./SentinelAI/reports:/app/SentinelAI/reports
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    name: sentinelai-net

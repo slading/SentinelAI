@@ -1,0 +1,16 @@
+{
+  "email_id": "EMAIL_9385AA80",
+  "case_id": "CASE_FRZ_02",
+  "client_name": "Alicja Kowalska",
+  "account_id": "ACC_888",
+  "subject": "IMPORTANT: SentinelAI Account Verification Required (ACC_888)",
+  "body": "Dear Alicja Kowalska,\n\nWe are conducting a standard compliance review on account ACC_888. Please submit the following documentation: Identity verification selfie with photo ID, Detailed explanation of flagged transactions, Supporting source of funds documentation.\n\nSincerely,\nSentinelAI Compliance Team",
+  "tone": "formal_and_protective",
+  "language": "EN",
+  "documents_requested": [
+    "Identity verification selfie with photo ID",
+    "Detailed explanation of flagged transactions",
+    "Supporting source of funds documentation"
+  ],
+  "generated_at": "2026-07-01T18:21:02.430474Z"
+}

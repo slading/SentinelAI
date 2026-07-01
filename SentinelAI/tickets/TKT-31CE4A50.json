@@ -1,0 +1,18 @@
+{
+  "ticket_id": "TKT-31CE4A50",
+  "case_id": "CASE_CROSS_DEV_82592895",
+  "title": "[MEDIUM] AML Investigation: CROSS_DEVICE_IP_SPIKE (CASE_CROSS_DEV_82592895)",
+  "priority": "MEDIUM",
+  "description": "Automated compliance alert triggered under rule CROSS_DEVICE_IP_SPIKE. AI confidence: 94.0%. Rationale: Simulated LPU analysis detected abnormal multi-factor transaction signatures consistent with reported AML typologies.",
+  "evidence_summary": "Cross-Device Fraud: IP address 185.220.101.7 accessed 6 distinct accounts (ACC_10092, ACC_10021, ACC_10073, ACC_10005, ACC_10049, ACC_10078) within a 6.2-minute window between 19:47:15 and 19:53:30 UTC.",
+  "action_required": "Execute ESCALATE per FATF Rec 16 & AMLD5 Article 14",
+  "sla_hours": 24,
+  "tags": [
+    "CROSS_DEVICE_IP_SPIKE",
+    "MEDIUM",
+    "ESCALATE"
+  ],
+  "assignee": "kyc-team",
+  "status": "OPEN",
+  "created_at": "2026-07-01T21:52:52.473612Z"
+}

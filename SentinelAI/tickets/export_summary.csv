@@ -1,0 +1,2 @@
+ticket_id,case_id,title,priority,sla_hours,assignee,status,action_required,tags,created_at
+TKT-03D9DFC3,CASE_TKT_CRIT_01,[CRITICAL] AML Investigation: IMPOSSIBLE_GEO_TRAVEL (CASE_TKT_CRIT_01),CRITICAL,2,compliance-director,OPEN,Execute FREEZE per PSD2,"IMPOSSIBLE_GEO_TRAVEL, CRITICAL, FREEZE",2026-07-01T18:24:44.352783+00:00

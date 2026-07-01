@@ -1,0 +1,18 @@
+{
+  "ticket_id": "TKT-9332B041",
+  "case_id": "CASE_TRAVEL_FD6AEC87",
+  "title": "[MEDIUM] AML Investigation: IMPOSSIBLE_GEO_TRAVEL (CASE_TRAVEL_FD6AEC87)",
+  "priority": "MEDIUM",
+  "description": "Automated compliance alert triggered under rule IMPOSSIBLE_GEO_TRAVEL. AI confidence: 94.0%. Rationale: Simulated LPU analysis detected abnormal multi-factor transaction signatures consistent with reported AML typologies.",
+  "evidence_summary": "Impossible Travel: Account ACC_10021 executed transactions in two distinct countries within 32.3 minutes. Jumped from NG (tx: 393f5121-d3f6-4f40-bf73-81a3a7c467f8) at 19:48:30 to DE (tx: ac6e90b3-e04d-4b5d-841f-8f83608c489c) at 20:20:50 UTC.",
+  "action_required": "Execute ESCALATE per FATF Rec 16 & AMLD5 Article 14",
+  "sla_hours": 24,
+  "tags": [
+    "IMPOSSIBLE_GEO_TRAVEL",
+    "MEDIUM",
+    "ESCALATE"
+  ],
+  "assignee": "kyc-team",
+  "status": "OPEN",
+  "created_at": "2026-07-01T21:52:51.501722Z"
+}

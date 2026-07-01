@@ -1,0 +1,14 @@
+{
+  "case_id": "#308B-X",
+  "rule_triggered": "OFAC-Match",
+  "risk_score": 90.0,
+  "related_accounts": [
+    "ACC_MANUAL"
+  ],
+  "related_transactions": [],
+  "timestamps": [
+    "2026-07-01T22:04:35.234496Z"
+  ],
+  "evidence_summary": "Manual OFAC hit",
+  "created_at": "2026-07-01T22:04:35.234523Z"
+}

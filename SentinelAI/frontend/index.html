@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SENTINEL■AI // GOTHAM INTELLIGENCE TERMINAL</title>
+    <!-- Google Fonts: JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        gotham: {
+                            bg: '#0A0E1A',
+                            surface: '#0F1420',
+                            elevated: '#131824',
+                            borderSubtle: 'rgba(255,255,255,0.05)',
+                            borderAccent: 'rgba(0,255,140,0.15)',
+                            textPri: '#E8ECF1',
+                            textSec: '#6B7280',
+                            textMuted: '#4A5568',
+                            textAccent: '#00FF8C',
+                            crit: '#FF4444',
+                            high: '#FF8C42',
+                            med: '#FFD93D',
+                            low: '#00FF8C',
+                            info: '#4A9EFF',
+                            groq: '#3B82F6',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #0A0E1A;
+            color: #E8ECF1;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            margin: 0; padding: 0;
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0A0E1A; }
+        ::-webkit-scrollbar-thumb { background: #131824; border-radius: 2px; border: 1px solid rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb:hover { background: #00FF8C; }
+
+        /* Panel borders & shadows */
+        .panel-surface {
+            background-color: #0F1420;
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        .panel-elevated {
+            background-color: #131824;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 4px;
+        }
+
+        .stat-card {
+            background-color: #0F1420;
+            border-radius: 4px;
+            padding: 16px 20px;
+            height: 104px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+
+        /* Table row hover */
+        .table-row {
+            transition: background-color 150ms ease;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .table-row:hover {
+            background-color: rgba(0, 255, 140, 0.03);
+        }
+
+        /* Slide-in Drawer */
+        #detail-drawer {
+            transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Modals & Overlays */
+        .modal-fade {
+            transition: opacity 200ms ease;
+        }
+
+        /* Staggered fade in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade { animation: fadeIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        /* Pulse glow */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(0, 255, 140, 0.15); }
+            50% { box-shadow: 0 0 25px rgba(0, 255, 140, 0.35); }
+        }
+        .glow-verdict {
+            border: 1px solid #00FF8C;
+            animation: pulseGlow 3s infinite;
+        }
+    </style>
+</head>
+<body class="flex h-screen w-screen text-xs select-none">
+
+    <!-- LEFT SIDEBAR (240px Fixed) -->
+    <aside class="w-[240px] flex-shrink-0 bg-[#0A0E1A] border-r border-[rgba(255,255,255,0.05)] flex flex-col justify-between p-5 z-30">
+        <div>
+            <!-- Top Logo -->
+            <div class="mb-6">
+                <div class="text-[18px] font-bold tracking-[0.05em] text-[#00FF8C] flex items-center">
+                    SENTINEL■AI
+                </div>
+                <div class="text-[10px] uppercase text-[#4A5568] tracking-wider mt-1">
+                    SYSTEM ACTIVE // CORE_V4.2
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="space-y-1">
+                <a href="#" onclick="switchPage('dashboard'); return false;" id="nav-dashboard" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#00FF8C] bg-[rgba(0,255,140,0.08)] border-l-2 border-[#00FF8C] transition-all">
+                    <svg class="w-4 h-4 text-[#00FF8C]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" onclick="switchPage('cases'); return false;" id="nav-cases" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7h-4V4c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v3H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2zM10 4h4v3h-4V4z"/></svg>
+                    <span>Cases</span>
+                </a>
+                <a href="#" onclick="switchPage('verdicts'); return false;" id="nav-verdicts" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span>Verdicts</span>
+                </a>
+                <a href="#" onclick="switchPage('tickets'); return false;" id="nav-tickets" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+                    <span>Tickets</span>
+                </a>
+                <a href="#" onclick="switchPage('emails'); return false;" id="nav-emails" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+                    <span>Emails</span>
+                </a>
+                <a href="#" onclick="switchPage('reports'); return false;" id="nav-reports" class="flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+                    <span>Reports</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Bottom Section -->
+        <div class="space-y-3">
+            <button onclick="openNewInvestigationModal()" class="w-full bg-[#00FF8C] text-[#0A0E1A] font-bold text-[13px] py-3 rounded-[4px] hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_0_15px_rgba(0,255,140,0.2)]">
+                New Investigation
+            </button>
+
+            <div class="pt-2 space-y-1">
+                <a href="#" onclick="switchPage('settings'); return false;" id="nav-settings" class="flex items-center gap-3 px-3 h-[36px] rounded text-[13px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    <span>Settings</span>
+                </a>
+                <a href="#" onclick="showToast('Support documentation protocol online.', 'info'); return false;" class="flex items-center gap-3 px-3 h-[36px] rounded text-[13px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Support</span>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN APP AREA -->
+    <div class="flex-1 flex flex-col h-full bg-[#0A0E1A] overflow-hidden relative">
+
+        <!-- TOP HEADER (48px) -->
+        <header class="h-[48px] border-b border-[rgba(255,255,255,0.05)] px-6 flex items-center justify-between flex-shrink-0 bg-transparent z-20">
+            <!-- Breadcrumbs -->
+            <div class="text-[12px] uppercase tracking-[0.1em] text-[#4A5568] flex items-center gap-2">
+                <span>SYSTEM</span>
+                <span>&gt;</span>
+                <span>MONITORING</span>
+                <span>&gt;</span>
+                <span id="breadcrumb-current" class="text-[#00FF8C] font-semibold">LIVE_FEED</span>
+            </div>
+
+            <!-- Right Controls -->
+            <div class="flex items-center gap-5">
+                <!-- LIVE Indicator -->
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[rgba(255,255,255,0.1)] text-[#E8ECF1] text-[11px] uppercase font-bold tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-[#FF4444] animate-pulse inline-block"></span>
+                    <span>LIVE</span>
+                </div>
+
+                <!-- RUN PIPELINE Button -->
+                <button onclick="triggerRunPipeline()" class="flex items-center gap-2 px-4 py-1.5 border border-[#00FF8C] text-[#00FF8C] text-[12px] font-bold uppercase tracking-wider hover:bg-[rgba(0,255,140,0.1)] active:scale-[0.98] transition-all rounded-[3px]">
+                    <span class="text-xs">▷</span>
+                    <span>RUN PIPELINE</span>
+                </button>
+
+                <!-- Notification Bell -->
+                <div class="relative">
+                    <button onclick="toggleNotifications()" class="text-[#6B7280] hover:text-[#E8ECF1] transition-colors p-1 relative">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                        <span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-[#00FF8C]"></span>
+                    </button>
+                    <!-- Dropdown -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-[#0F1420] border border-[rgba(255,255,255,0.1)] rounded p-4 shadow-2xl z-50 space-y-3">
+                        <div class="flex justify-between items-center pb-2 border-b border-[rgba(255,255,255,0.05)]">
+                            <span class="text-[11px] uppercase text-[#6B7280] font-bold tracking-widest">NOTIFICATIONS</span>
+                            <span onclick="showToast('All system alerts cleared.', 'low')" class="text-[10px] text-[#00FF8C] cursor-pointer hover:underline">MARK ALL READ</span>
+                        </div>
+                        <div class="space-y-2.5 text-xs max-h-60 overflow-y-auto pr-1 font-mono">
+                            <div class="p-2.5 bg-[#131824] rounded border-l-2 border-[#FF4444]">
+                                <div class="text-[#FF4444] font-bold">#7994-X ESCALATED</div>
+                                <div class="text-[#6B7280] text-[11px] mt-0.5">High velocity OFAC layering hit.</div>
+                            </div>
+                            <div class="p-2.5 bg-[#131824] rounded border-l-2 border-[#FF8C42]">
+                                <div class="text-[#FF8C42] font-bold">SLAS ROUTING UPDATED</div>
+                                <div class="text-[#6B7280] text-[11px] mt-0.5">KYC queue threshold shifted to 24h.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Avatar -->
+                <div class="relative">
+                    <div onclick="toggleUserMenu()" class="w-8 h-8 rounded-full bg-[#131824] border border-[rgba(255,255,255,0.1)] flex items-center justify-center text-[#6B7280] hover:text-[#00FF8C] cursor-pointer transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <!-- Dropdown -->
+                    <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-[#0F1420] border border-[rgba(255,255,255,0.1)] rounded p-2 shadow-2xl z-50 text-xs font-mono">
+                        <div class="px-3 py-2 border-b border-[rgba(255,255,255,0.05)] text-[#E8ECF1] font-bold">
+                            DIRECTOR_UID_01
+                            <div class="text-[10px] text-[#6B7280] font-normal">Level 3 Clearance</div>
+                        </div>
+                        <a href="#" onclick="switchPage('settings'); toggleUserMenu(); return false;" class="block px-3 py-2 text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[#131824] rounded mt-1">API Credentials</a>
+                        <a href="#" onclick="showToast('System locked. Re-auth required.', 'crit'); return false;" class="block px-3 py-2 text-[#FF4444] hover:bg-[#131824] rounded">Lock Terminal</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT CONTAINER (Scrollable) -->
+        <main id="main-scroll-area" class="flex-1 overflow-y-auto p-6 relative">
+
+            <!-- PAGE 1: DASHBOARD (Default) -->
+            <div id="page-dashboard" class="space-y-5 animate-fade">
+                <!-- STATS ROW (4 cards) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Card 1 -->
+                    <div class="stat-card" style="border: 1px solid rgba(0,255,140,0.2);">
+                        <div class="text-[10px] uppercase text-[#6B7280] tracking-[0.15em]">TRANSACTIONS (24H)</div>
+                        <div class="flex items-baseline justify-between mt-1">
+                            <span id="card-num-tx" class="text-[32px] font-bold text-[#E8ECF1]">1,284,092</span>
+                            <span class="text-[#00FF8C] text-[11px] font-semibold">+2.4%</span>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="stat-card" style="border: 1px solid rgba(255,68,68,0.3);">
+                        <div class="text-[10px] uppercase text-[#FF4444] tracking-[0.15em]">FRAUD CASES DETECTED</div>
+                        <div class="text-[32px] font-bold text-[#FF4444] mt-1" id="card-num-cases">142</div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="stat-card" style="border: 1px solid rgba(59,130,246,0.3);">
+                        <div class="text-[10px] uppercase text-[#3B82F6] tracking-[0.15em]">GROQ TOKENS USED</div>
+                        <div class="text-[32px] font-bold text-[#3B82F6] mt-1" id="card-num-tokens">84.2M</div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="stat-card" style="border: 1px solid rgba(0,255,140,0.3);">
+                        <div class="text-[10px] uppercase text-[#00FF8C] tracking-[0.15em]">EMAILS GENERATED</div>
+                        <div class="text-[32px] font-bold text-[#00FF8C] mt-1" id="card-num-emails">1,024</div>
+                    </div>
+                </div>
+
+                <!-- MIDDLE SECTION (65% / 35%) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    
+                    <!-- LEFT COLUMN (65% -> col-span-8) -->
+                    <div class="lg:col-span-8 space-y-5">
+                        
+                        <!-- Panel 1: GLOBAL RISK DISTRIBUTION -->
+                        <div class="panel-surface p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <span class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold">GLOBAL RISK DISTRIBUTION</span>
+                                <div class="flex items-center gap-4 text-[10px] uppercase font-semibold">
+                                    <span class="flex items-center gap-1.5 text-[#FF4444]"><span class="w-2.5 h-2.5 rounded-full bg-[#FF4444] inline-block"></span> Critical</span>
+                                    <span class="flex items-center gap-1.5 text-[#FF8C42]"><span class="w-2.5 h-2.5 rounded-full bg-[#FF8C42] inline-block"></span> High</span>
+                                    <span class="flex items-center gap-1.5 text-[#FFD93D]"><span class="w-2.5 h-2.5 rounded-full bg-[#FFD93D] inline-block"></span> Medium</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-center py-2">
+                                <div class="w-[280px] h-[280px] relative flex items-center justify-center">
+                                    <canvas id="donutChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 2: ACTIVE INVESTIGATIONS -->
+                        <div class="panel-surface p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-[11px] uppercase tracking-[0.15em] text-[#E8ECF1] font-bold">ACTIVE INVESTIGATIONS</span>
+                                <a href="#" onclick="switchPage('cases'); return false;" class="text-[11px] text-[#00FF8C] hover:underline">View All Records</a>
+                            </div>
+
+                            <!-- Table Header -->
+                            <div class="grid grid-cols-12 text-[10px] uppercase tracking-[0.15em] text-[#6B7280] py-3 border-b border-[rgba(255,255,255,0.05)] font-bold">
+                                <div class="col-span-3">CASE ID</div>
+                                <div class="col-span-3">RULE</div>
+                                <div class="col-span-2">RISK</div>
+                                <div class="col-span-2">STATUS</div>
+                                <div class="col-span-2 text-right">TIME</div>
+                            </div>
+
+                            <!-- Rows Container -->
+                            <div id="dash-cases-table" class="divide-y divide-[rgba(255,255,255,0.03)]">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- RIGHT COLUMN (35% -> col-span-4) -->
+                    <div class="lg:col-span-4 space-y-5">
+                        
+                        <!-- Panel 3: SYSTEM INTERVENTIONS -->
+                        <div class="panel-surface p-6">
+                            <div class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold mb-6">SYSTEM INTERVENTIONS</div>
+                            <div class="space-y-5">
+                                <!-- Item 1 -->
+                                <div>
+                                    <div class="flex justify-between text-[11px] uppercase tracking-[0.1em] font-semibold text-[#FF4444] mb-1.5">
+                                        <span>FREEZE ACCOUNTS</span>
+                                        <span>42%</span>
+                                    </div>
+                                    <div class="h-[4px] w-full bg-[rgba(255,255,255,0.05)] rounded-[2px] overflow-hidden">
+                                        <div id="bar-freeze" class="h-full bg-[#FF4444] transition-all duration-1000 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <!-- Item 2 -->
+                                <div>
+                                    <div class="flex justify-between text-[11px] uppercase tracking-[0.1em] font-semibold text-[#FF8C42] mb-1.5">
+                                        <span>ESCALATE (MANUAL REVIEW)</span>
+                                        <span>28%</span>
+                                    </div>
+                                    <div class="h-[4px] w-full bg-[rgba(255,255,255,0.05)] rounded-[2px] overflow-hidden">
+                                        <div id="bar-escalate" class="h-full bg-[#FF8C42] transition-all duration-1000 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <!-- Item 3 -->
+                                <div>
+                                    <div class="flex justify-between text-[11px] uppercase tracking-[0.1em] font-semibold text-[#3B82F6] mb-1.5">
+                                        <span>REQUEST ENHANCED KYC</span>
+                                        <span>18%</span>
+                                    </div>
+                                    <div class="h-[4px] w-full bg-[rgba(255,255,255,0.05)] rounded-[2px] overflow-hidden">
+                                        <div id="bar-kyc" class="h-full bg-[#3B82F6] transition-all duration-1000 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <!-- Item 4 -->
+                                <div>
+                                    <div class="flex justify-between text-[11px] uppercase tracking-[0.1em] font-semibold text-[#6B7280] mb-1.5">
+                                        <span>MONITOR ONLY</span>
+                                        <span>12%</span>
+                                    </div>
+                                    <div class="h-[4px] w-full bg-[rgba(255,255,255,0.05)] rounded-[2px] overflow-hidden">
+                                        <div id="bar-monitor" class="h-full bg-[#6B7280] transition-all duration-1000 ease-out" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 4: LATEST AI VERDICT -->
+                        <div class="panel-surface p-5 glow-verdict">
+                            <div class="text-[11px] uppercase tracking-[0.15em] font-bold text-[#00FF8C]">LATEST AI VERDICT</div>
+                            
+                            <div class="flex items-center gap-2 mt-3 mb-3">
+                                <span id="verdict-case-badge" class="px-2 py-0.5 rounded-[3px] bg-[rgba(0,255,140,0.1)] border border-[rgba(0,255,140,0.3)] text-[#00FF8C] text-[10px] font-mono font-bold">CASE_ID: #7729-X</span>
+                                <span id="verdict-time-label" class="text-[11px] text-[#6B7280] font-mono">02:14:11 UTC</span>
+                            </div>
+
+                            <p id="verdict-text-box" class="text-[13px] text-[#E8ECF1] font-mono leading-[1.6]">
+                                Analysis of account velocity for user UID_99182 indicates a pattern characteristic of automated layering. Proposing immediate asset sequestration and high-priority escalation to FIU. Confidence score: 0.98.
+                            </p>
+                        </div>
+
+                        <!-- Panel 5: GROQ ACTIVITY FEED -->
+                        <div class="panel-surface p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold">GROQ ACTIVITY FEED</span>
+                                <span class="text-[10px] text-[#3B82F6] font-mono">62.8 ms avg latency</span>
+                            </div>
+                            <div id="groq-feed-box" class="h-[180px] overflow-y-auto space-y-1.5 text-[11px] font-mono text-[#6B7280] leading-[1.7] pr-1">
+                                <div><span class="text-[#4A5568]">[49]</span> Rule engine healthy.</div>
+                                <div><span class="text-[#4A5568]">[50]</span> Groq inference completed in 58ms.</div>
+                                <div><span class="text-[#4A5568]">[51]</span> Case #7729-X analyzed.</div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- PAGE 2: CASES -->
+            <div id="page-cases" class="hidden space-y-5 animate-fade">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0F1420] p-4 rounded border border-[rgba(255,255,255,0.05)]">
+                    <div class="flex items-center gap-3 flex-1">
+                        <span class="text-[11px] uppercase tracking-wider text-[#6B7280] font-bold">FILTER:</span>
+                        <input id="cases-search" oninput="filterCasesTable()" type="text" placeholder="Search Case ID (#7994-X)..." class="bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded px-3 py-1.5 text-xs text-[#E8ECF1] font-mono outline-none focus:border-[#00FF8C] w-64">
+                        <select id="cases-risk-filter" onchange="filterCasesTable()" class="bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded px-3 py-1.5 text-xs text-[#E8ECF1] outline-none">
+                            <option value="ALL">All Risk Levels</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="HIGH">High</option>
+                            <option value="MEDIUM">Medium</option>
+                            <option value="LOW">Low</option>
+                        </select>
+                    </div>
+                    <div class="text-[11px] text-[#6B7280] font-mono">SHOWING ALL ACTIVE COMPLIANCE RECORDS</div>
+                </div>
+
+                <div class="panel-surface p-6">
+                    <div class="grid grid-cols-12 text-[10px] uppercase tracking-[0.15em] text-[#6B7280] py-3 border-b border-[rgba(255,255,255,0.05)] font-bold">
+                        <div class="col-span-2">CASE ID</div>
+                        <div class="col-span-3">RULE TRIGGERED</div>
+                        <div class="col-span-2">RISK TIER</div>
+                        <div class="col-span-2">STATUS</div>
+                        <div class="col-span-2">EVIDENCE EXCERPT</div>
+                        <div class="col-span-1 text-right">TIME</div>
+                    </div>
+                    <div id="full-cases-table" class="divide-y divide-[rgba(255,255,255,0.03)]">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 3: VERDICTS -->
+            <div id="page-verdicts" class="hidden space-y-5 animate-fade">
+                <div class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold">COGNITIVE ADJUDICATIONS GRID</div>
+                <div id="verdicts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- PAGE 4: TICKETS -->
+            <div id="page-tickets" class="hidden space-y-5 animate-fade">
+                <div class="flex justify-between items-center">
+                    <div class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold">OPERATIONAL KANBAN QUEUE</div>
+                    <span class="text-xs text-[#00FF8C]">Click ticket to inspect SLA terms</span>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                    <!-- OPEN -->
+                    <div class="panel-surface p-4 space-y-3">
+                        <div class="text-xs font-bold text-[#FF4444] uppercase tracking-wider pb-2 border-b border-[rgba(255,255,255,0.05)] flex justify-between">
+                            <span>[01] OPEN ESCALATIONS</span>
+                            <span id="tkt-count-open">3</span>
+                        </div>
+                        <div id="kanban-open" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+                    </div>
+                    <!-- IN PROGRESS -->
+                    <div class="panel-surface p-4 space-y-3">
+                        <div class="text-xs font-bold text-[#FFD93D] uppercase tracking-wider pb-2 border-b border-[rgba(255,255,255,0.05)] flex justify-between">
+                            <span>[02] IN_PROGRESS (KYC)</span>
+                            <span id="tkt-count-prog">2</span>
+                        </div>
+                        <div id="kanban-prog" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+                    </div>
+                    <!-- RESOLVED -->
+                    <div class="panel-surface p-4 space-y-3">
+                        <div class="text-xs font-bold text-[#00FF8C] uppercase tracking-wider pb-2 border-b border-[rgba(255,255,255,0.05)] flex justify-between">
+                            <span>[03] RESOLVED PROTOCOLS</span>
+                            <span id="tkt-count-res">5</span>
+                        </div>
+                        <div id="kanban-res" class="space-y-3 max-h-[600px] overflow-y-auto pr-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 5: EMAILS -->
+            <div id="page-emails" class="hidden space-y-5 animate-fade">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[650px]">
+                    <!-- Left List -->
+                    <div class="lg:col-span-5 panel-surface p-4 flex flex-col">
+                        <div class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold pb-3 border-b border-[rgba(255,255,255,0.05)]">DISPATCHED CLIENT NOTICES</div>
+                        <div id="emails-list-container" class="space-y-2 mt-3 flex-1 overflow-y-auto pr-1"></div>
+                    </div>
+                    <!-- Right Preview -->
+                    <div class="lg:col-span-7 panel-surface p-6 flex flex-col justify-between">
+                        <div id="email-preview-box" class="space-y-4 font-mono text-xs">
+                            <div class="text-[#6B7280]">Select an email notification from the left list to inspect terms.</div>
+                        </div>
+                        <div class="pt-4 border-t border-[rgba(255,255,255,0.05)] flex justify-end gap-3">
+                            <button onclick="showToast('Email content copied to clipboard.', 'low')" class="px-4 py-2 bg-[#131824] hover:bg-[#1f293b] text-[#E8ECF1] rounded text-xs font-bold">Copy Body</button>
+                            <button onclick="showToast('Exported email audit record to JSON.', 'low')" class="px-4 py-2 bg-[#00FF8C] text-[#0A0E1A] rounded text-xs font-bold">Download JSON</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 6: REPORTS -->
+            <div id="page-reports" class="hidden space-y-5 animate-fade">
+                <div class="panel-surface p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-[rgba(255,255,255,0.05)] pb-4">
+                        <div>
+                            <div class="text-[11px] uppercase tracking-[0.15em] text-[#6B7280] font-bold">EXECUTIVE COMPLIANCE DOSSIER</div>
+                            <h2 class="text-xl font-bold text-[#00FF8C] mt-1" id="report-title">DAILY DOSSIER: 2026-07-01</h2>
+                        </div>
+                        <button onclick="showToast('Executive dossier downloaded as PDF/TXT.', 'low')" class="px-4 py-2 bg-[#00FF8C] text-[#0A0E1A] font-bold rounded text-xs">Export Dossier</button>
+                    </div>
+                    <div id="report-body-content" class="p-4 bg-[#131824] rounded font-mono text-xs leading-relaxed text-[#E8ECF1] whitespace-pre-wrap max-h-[500px] overflow-y-auto">
+                        Loading executive compliance dossier...
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE 7: SETTINGS -->
+            <div id="page-settings" class="hidden space-y-5 animate-fade">
+                <div class="panel-surface p-6 space-y-6 max-w-3xl">
+                    <div class="text-[11px] uppercase tracking-[0.15em] text-[#00FF8C] font-bold border-b border-[rgba(255,255,255,0.05)] pb-3">GROQ API &amp; THRESHOLDS PARAMETERS</div>
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="block text-[#6B7280] uppercase mb-1">Primary Inference Model</label>
+                            <input type="text" value="llama-3.3-70b-versatile" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#E8ECF1] font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-[#6B7280] uppercase mb-1">Fallback Model</label>
+                            <input type="text" value="llama-3.1-8b-instant" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#E8ECF1] font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-[#6B7280] uppercase mb-1">High Value Threshold (USD)</label>
+                            <input type="number" value="10000" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#00FF8C] font-mono font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-[#6B7280] uppercase mb-1">SLA Critical Response (Hours)</label>
+                            <input type="number" value="2" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#FF4444] font-mono font-bold">
+                        </div>
+                    </div>
+                    <button onclick="showToast('System configuration saved across nodes.', 'low')" class="px-6 py-2.5 bg-[#00FF8C] text-[#0A0E1A] font-bold rounded text-xs">Save Settings</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SLIDE-IN DETAIL DRAWER (Right Fixed) -->
+    <div id="detail-drawer" class="fixed top-0 right-0 w-[460px] h-full bg-[#0F1420] border-l border-[rgba(255,255,255,0.08)] shadow-2xl z-50 translate-x-full flex flex-col justify-between p-6 font-mono text-xs">
+        <div class="space-y-5 overflow-y-auto flex-1 pr-2">
+            <div class="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-4">
+                <div>
+                    <div class="text-[10px] text-[#6B7280] uppercase tracking-widest">FORENSIC INSPECTION DRAWER</div>
+                    <div class="text-lg font-bold text-[#00FF8C]" id="drawer-case-id">#7994-X</div>
+                </div>
+                <button onclick="closeDrawer()" class="text-[#6B7280] hover:text-white text-lg font-bold p-1 bg-[#131824] rounded">✕</button>
+            </div>
+
+            <!-- Badges -->
+            <div class="flex gap-2.5">
+                <span id="drawer-risk-badge" class="px-2.5 py-1 rounded-[3px] text-[10px] font-bold uppercase bg-[rgba(255,68,68,0.15)] text-[#FF4444] border border-[rgba(255,68,68,0.3)]">CRITICAL</span>
+                <span id="drawer-action-badge" class="px-2.5 py-1 rounded-[3px] text-[10px] font-bold uppercase bg-[rgba(255,68,68,0.2)] text-[#FF4444] border border-[#FF4444]">FREEZE</span>
+            </div>
+
+            <!-- Evidence Section -->
+            <div>
+                <div class="text-[10px] text-[#6B7280] uppercase tracking-wider mb-1.5 font-bold">STATISTICAL EVIDENCE</div>
+                <div id="drawer-evidence" class="p-3.5 rounded bg-[#131824] border border-[rgba(255,255,255,0.05)] leading-relaxed text-[#E8ECF1]">
+                </div>
+            </div>
+
+            <!-- Reasoning Section -->
+            <div>
+                <div class="text-[10px] text-[#00FF8C] uppercase tracking-wider mb-1.5 font-bold">GROQ LPU REASONING</div>
+                <div id="drawer-reasoning" class="p-3.5 rounded bg-[rgba(0,255,140,0.03)] border border-[rgba(0,255,140,0.2)] leading-relaxed text-[#E8ECF1]">
+                </div>
+            </div>
+
+            <!-- Assigned Ticket Section -->
+            <div>
+                <div class="text-[10px] text-[#6B7280] uppercase tracking-wider mb-1.5 font-bold">ASSIGNED QUEUE TICKET</div>
+                <div id="drawer-ticket" class="p-3.5 rounded bg-[#131824] border border-[rgba(255,255,255,0.05)] text-[#6B7280]">
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 border-t border-[rgba(255,255,255,0.05)] text-right">
+            <button onclick="closeDrawer()" class="w-full bg-[#131824] hover:bg-[#00FF8C] hover:text-[#0A0E1A] text-[#E8ECF1] py-2.5 rounded font-bold transition-all">
+                CLOSE INSPECTION DRAWER
+            </button>
+        </div>
+    </div>
+
+    <!-- NEW INVESTIGATION MODAL -->
+    <div id="modal-new-investigation" class="fixed inset-0 bg-[rgba(10,14,26,0.85)] backdrop-blur-md z-50 hidden items-center justify-center p-6 modal-fade">
+        <div class="panel-surface p-6 max-w-md w-full space-y-4 border border-[rgba(0,255,140,0.3)] shadow-2xl font-mono text-xs">
+            <div class="flex justify-between items-center border-b border-[rgba(255,255,255,0.05)] pb-3">
+                <span class="text-[13px] font-bold text-[#00FF8C] uppercase">OPEN NEW INVESTigation</span>
+                <button onclick="closeNewInvestigationModal()" class="text-[#6B7280] hover:text-white">✕</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] uppercase text-[#6B7280] mb-1">Triggered Rule Typology</label>
+                    <select id="new-inv-rule" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#E8ECF1] outline-none">
+                        <option value="OFAC-Match">OFAC-Match</option>
+                        <option value="Geo-Fence Violation">Geo-Fence Violation</option>
+                        <option value="Velocity Spike">Velocity Spike</option>
+                        <option value="Structuring / Layering">Structuring / Layering</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-[#6B7280] mb-1">Target Account ID</label>
+                    <input id="new-inv-acc" type="text" value="ACC_99812" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#E8ECF1]">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-[#6B7280] mb-1">Initial Risk Score (0-100)</label>
+                    <input id="new-inv-risk" type="number" value="88" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#FF8C42] font-bold">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-[#6B7280] mb-1">Evidence Summary</label>
+                    <textarea id="new-inv-desc" rows="3" class="w-full bg-[#131824] border border-[rgba(255,255,255,0.1)] rounded p-2 text-[#E8ECF1]">High velocity cross-border transfer flagged by analyst.</textarea>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-[rgba(255,255,255,0.05)] flex justify-end gap-3">
+                <button onclick="closeNewInvestigationModal()" class="px-4 py-2 bg-[#131824] text-[#6B7280] rounded font-bold">Cancel</button>
+                <button onclick="submitNewInvestigation()" class="px-5 py-2 bg-[#00FF8C] text-[#0A0E1A] font-bold rounded hover:brightness-110">Escalate Case</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIPELINE PROGRESS OVERLAY -->
+    <div id="pipeline-overlay" class="fixed inset-0 bg-[rgba(10,14,26,0.88)] backdrop-blur-lg z-50 hidden items-center justify-center p-6">
+        <div class="panel-surface p-8 max-w-lg w-full space-y-6 text-center border border-[#00FF8C] shadow-[0_0_30px_rgba(0,255,140,0.2)] font-mono">
+            <div class="text-[11px] uppercase tracking-[0.2em] text-[#00FF8C] font-bold animate-pulse">
+                ▷ ORCHESTRATING PIPELINE RUN
+            </div>
+            <div class="text-lg font-bold text-white" id="sse-step-title">INITIALIZING LPU INFERENCE...</div>
+            
+            <div class="w-full bg-[#131824] h-2.5 rounded-full overflow-hidden p-0.5 border border-[rgba(255,255,255,0.1)]">
+                <div id="sse-progress-bar" class="h-full bg-[#00FF8C] rounded-full transition-all duration-300 shadow-[0_0_8px_#00FF8C]" style="width: 5%"></div>
+            </div>
+
+            <div class="text-xs text-[#6B7280] flex justify-between">
+                <span id="sse-session-id">SESSION: PENDING</span>
+                <span id="sse-progress-pct" class="text-[#00FF8C] font-bold">5%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- VANILLA JS ARCHITECTURE -->
+    <script>
+        // Reference exact mockup rows for immediate visual fidelity
+        const INITIAL_MOCK_CASES = [
+            { case_id: '#7994-X', rule_triggered: 'OFAC-Match', risk_score: 91, risk_level: 'HIGH', action: 'FREEZE', status: 'ANALYZING', created_at: 'Just now', evidence_summary: 'Target account matched OFAC SDN sanctions list during outbound SWIFT transfer attempt.', reasoning: 'Analysis of account velocity for user UID_99182 indicates a pattern characteristic of automated layering. Proposing immediate asset sequestration.' },
+            { case_id: '#7319-X', rule_triggered: 'Geo-Fence Violation', risk_score: 65, risk_level: 'MEDIUM', action: 'ESCALATE', status: 'ANALYZING', created_at: 'Just now', evidence_summary: 'Login initiated from high-risk jurisdiction incompatible with registered home address.', reasoning: 'Unusual IP hop observed between Frankfurt and Pyongyang within 45 minutes.' },
+            { case_id: '#5651-X', rule_triggered: 'Geo-Fence Violation', risk_score: 30, risk_level: 'LOW', action: 'MONITOR', status: 'ANALYZING', created_at: 'Just now', evidence_summary: 'Minor geographical shift observed via corporate VPN.', reasoning: 'Standard roaming IP signature within permitted European economic zone.' },
+            { case_id: '#7687-X', rule_triggered: 'Velocity Spike', risk_score: 35, risk_level: 'LOW', action: 'MONITOR', status: 'ANALYZING', created_at: 'Just now', evidence_summary: '15 retail transactions in 45 seconds.', reasoning: 'Consistent with automated subscription card pre-authorizations.' },
+            { case_id: '#6264-X', rule_triggered: 'Geo-Fence Violation', risk_score: 68, risk_level: 'MEDIUM', action: 'REQUEST_KYC', status: 'ANALYZING', created_at: 'Just now', evidence_summary: 'Login from new foreign IP accompanied by $8,500 withdrawal request.', reasoning: 'Enhanced source of funds verification required before clearing transfer.' }
+        ];
+
+        let donutChartInstance = null;
+        let activeCasesList = [...INITIAL_MOCK_CASES];
+        let globalVerdicts = {};
+
+        // DOM Loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initDonutChart();
+            renderDashboardCases(activeCasesList);
+            renderFullCasesPage(activeCasesList);
+            renderVerdictsGrid(activeCasesList);
+            renderTicketsKanban(activeCasesList);
+            renderEmailsPage(activeCasesList);
+            
+            // Animate initial stats
+            animateCountUp('bar-freeze', 42, true);
+            animateCountUp('bar-escalate', 28, true);
+            animateCountUp('bar-kyc', 18, true);
+            animateCountUp('bar-monitor', 12, true);
+
+            // Fetch live API data if available
+            syncWithAPI();
+            setInterval(syncWithAPI, 30000); // 30s auto-refresh
+
+            // Keyboard shortcuts
+            window.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openNewInvestigationModal(); }
+                if (e.key === 'Escape') { closeDrawer(); closeNewInvestigationModal(); }
+            });
+        });
+
+        // Chart.js Donut Chart matching screen.png exactly
+        function initDonutChart() {
+            const ctx = document.getElementById('donutChart').getContext('2d');
+            donutChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [15, 20, 30, 35],
+                        backgroundColor: ['#FF4444', '#FF8C42', '#FFD93D', '#00FF8C'],
+                        borderColor: '#0F1420',
+                        borderWidth: 4,
+                        hoverOffset: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#131824',
+                            titleFont: { family: 'JetBrains Mono', size: 11 },
+                            bodyFont: { family: 'JetBrains Mono', size: 11 },
+                            borderColor: 'rgba(255,255,255,0.1)',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        // Animate width or number
+        function animateCountUp(elementId, targetValue, isWidth = false) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            setTimeout(() => {
+                if (isWidth) el.style.width = `${targetValue}%`;
+                else el.innerText = targetValue.toLocaleString();
+            }, 100);
+        }
+
+        // Page Switch Router
+        function switchPage(pageId) {
+            const pages = ['dashboard', 'cases', 'verdicts', 'tickets', 'emails', 'reports', 'settings'];
+            pages.forEach(p => {
+                const el = document.getElementById(`page-${p}`);
+                const nav = document.getElementById(`nav-${p}`);
+                if (el) el.classList.add('hidden');
+                if (nav) {
+                    nav.className = 'flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#6B7280] hover:text-[#E8ECF1] hover:bg-[rgba(255,255,255,0.02)] transition-all';
+                }
+            });
+
+            const targetPage = document.getElementById(`page-${pageId}`);
+            const targetNav = document.getElementById(`nav-${pageId}`);
+            if (targetPage) targetPage.classList.remove('hidden');
+            if (targetNav) {
+                targetNav.className = 'flex items-center gap-3 px-3 h-[40px] rounded text-[14px] text-[#00FF8C] bg-[rgba(0,255,140,0.08)] border-l-2 border-[#00FF8C] font-bold transition-all';
+            }
+            document.getElementById('breadcrumb-current').innerText = pageId.toUpperCase();
+        }
+
+        // Render Dashboard Cases Table matching exact columns
+        function renderDashboardCases(casesList) {
+            const container = document.getElementById('dash-cases-table');
+            if (!container) return;
+            container.innerHTML = '';
+
+            casesList.slice(0, 5).forEach(item => {
+                const risk = item.risk_level || (item.risk_score >= 80 ? 'HIGH' : item.risk_score >= 50 ? 'MEDIUM' : 'LOW');
+                let badgeStyle = 'background: rgba(0,255,140,0.15); color: #00FF8C; border: 1px solid rgba(0,255,140,0.3);';
+                if (risk === 'HIGH' || risk === 'CRITICAL') badgeStyle = 'background: rgba(255,140,66,0.15); color: #FF8C42; border: 1px solid rgba(255,140,66,0.3);';
+                if (risk === 'MEDIUM') badgeStyle = 'background: rgba(255,217,61,0.15); color: #FFD93D; border: 1px solid rgba(255,217,61,0.3);';
+
+                const row = document.createElement('div');
+                row.className = 'table-row grid grid-cols-12 py-3.5 items-center font-mono text-xs cursor-pointer';
+                row.onclick = () => openDrawer(item.case_id);
+
+                row.innerHTML = `
+                    <div class="col-span-3 text-[#E8ECF1] font-semibold">${item.case_id}</div>
+                    <div class="col-span-3 text-[#E8ECF1] truncate pr-2">${item.rule_triggered}</div>
+                    <div class="col-span-2">
+                        <span style="${badgeStyle}" class="px-2 py-1 rounded-[3px] text-[10px] font-bold uppercase">${risk}</span>
+                    </div>
+                    <div class="col-span-2 flex items-center gap-1.5 text-[#E8ECF1]">
+                        <span class="w-2 h-2 rounded-full bg-[#00FF8C] animate-pulse inline-block"></span>
+                        <span class="text-[11px]">ANALYZING</span>
+                    </div>
+                    <div class="col-span-2 text-right text-[#6B7280] text-[11px]">${item.created_at || 'Just now'}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Render Cases Page Full Table
+        function renderFullCasesPage(casesList) {
+            const container = document.getElementById('full-cases-table');
+            if (!container) return;
+            container.innerHTML = '';
+            casesList.forEach(item => {
+                const risk = item.risk_level || 'MEDIUM';
+                let badgeStyle = 'background: rgba(0,255,140,0.15); color: #00FF8C; border: 1px solid rgba(0,255,140,0.3);';
+                if (risk === 'HIGH' || risk === 'CRITICAL') badgeStyle = 'background: rgba(255,68,68,0.15); color: #FF4444; border: 1px solid rgba(255,68,68,0.3);';
+                if (risk === 'MEDIUM') badgeStyle = 'background: rgba(255,217,61,0.15); color: #FFD93D; border: 1px solid rgba(255,217,61,0.3);';
+
+                const row = document.createElement('div');
+                row.className = 'table-row grid grid-cols-12 py-3.5 items-center font-mono text-xs cursor-pointer';
+                row.onclick = () => openDrawer(item.case_id);
+                row.innerHTML = `
+                    <div class="col-span-2 text-[#00FF8C] font-bold">${item.case_id}</div>
+                    <div class="col-span-3 text-[#E8ECF1]">${item.rule_triggered}</div>
+                    <div class="col-span-2"><span style="${badgeStyle}" class="px-2 py-0.5 rounded text-[10px] font-bold">${risk}</span></div>
+                    <div class="col-span-2 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#00FF8C] animate-pulse"></span> ANALYZING</div>
+                    <div class="col-span-2 text-[#6B7280] truncate pr-2">${item.evidence_summary}</div>
+                    <div class="col-span-1 text-right text-[#6B7280]">${item.created_at || 'Just now'}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // Filter Cases Table
+        function filterCasesTable() {
+            const query = document.getElementById('cases-search').value.toLowerCase();
+            const rFilter = document.getElementById('cases-risk-filter').value;
+            const filtered = activeCasesList.filter(c => {
+                const matchQ = c.case_id.toLowerCase().includes(query) || c.rule_triggered.toLowerCase().includes(query);
+                const matchR = rFilter === 'ALL' || c.risk_level === rFilter;
+                return matchQ && matchR;
+            });
+            renderFullCasesPage(filtered);
+        }
+
+        // Render Verdicts Grid
+        function renderVerdictsGrid(casesList) {
+            const grid = document.getElementById('verdicts-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            casesList.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'panel-surface p-5 space-y-3 font-mono text-xs cursor-pointer hover:border-[#00FF8C] transition-all';
+                card.onclick = () => openDrawer(item.case_id);
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-[rgba(255,255,255,0.05)] pb-2.5">
+                        <span class="text-[#00FF8C] font-bold">${item.case_id}</span>
+                        <span class="text-[10px] text-[#6B7280]">${item.created_at || 'Just now'}</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[rgba(255,140,66,0.15)] text-[#FF8C42] border border-[#FF8C42]">${item.risk_level || 'HIGH'}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[rgba(59,130,246,0.15)] text-[#3B82F6] border border-[#3B82F6]">${item.action || 'FREEZE'}</span>
+                    </div>
+                    <p class="text-[#E8ECF1] line-clamp-3 leading-relaxed">${item.reasoning}</p>
+                    <div class="pt-2 border-t border-[rgba(255,255,255,0.03)] flex justify-between items-center text-[11px]">
+                        <span class="text-[#6B7280]">Confidence</span>
+                        <span class="text-[#00FF8C] font-bold">98.4%</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Tickets Kanban
+        function renderTicketsKanban(casesList) {
+            const openCol = document.getElementById('kanban-open');
+            const progCol = document.getElementById('kanban-prog');
+            const resCol = document.getElementById('kanban-res');
+            if (!openCol || !progCol || !resCol) return;
+
+            openCol.innerHTML = ''; progCol.innerHTML = ''; resCol.innerHTML = '';
+            casesList.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'p-3.5 rounded bg-[#131824] border border-[rgba(255,255,255,0.05)] font-mono text-xs cursor-pointer hover:border-[#00FF8C] space-y-2';
+                card.onclick = () => openDrawer(item.case_id);
+                card.innerHTML = `
+                    <div class="flex justify-between items-center text-[#00FF8C] font-bold">
+                        <span>TKT-${item.case_id.replace('#', '')}</span>
+                        <span class="text-[10px] text-[#FF4444]">SLA: 2h</span>
+                    </div>
+                    <div class="text-[#E8ECF1] font-semibold">${item.rule_triggered}</div>
+                    <div class="text-[11px] text-[#6B7280] line-clamp-2">${item.evidence_summary}</div>
+                    <div class="pt-2 border-t border-[rgba(255,255,255,0.03)] flex justify-between text-[10px] text-[#4A5568]">
+                        <span>QUEUE: compliance-dir</span>
+                        <span class="text-[#00FF8C]">● ACTIVE</span>
+                    </div>
+                `;
+                if (idx % 3 === 0) openCol.appendChild(card);
+                else if (idx % 3 === 1) progCol.appendChild(card);
+                else resCol.appendChild(card);
+            });
+        }
+
+        // Render Emails Page
+        function renderEmailsPage(casesList) {
+            const container = document.getElementById('emails-list-container');
+            const preview = document.getElementById('email-preview-box');
+            if (!container || !preview) return;
+            container.innerHTML = '';
+
+            casesList.forEach((item, idx) => {
+                const row = document.createElement('div');
+                row.className = 'p-3 rounded bg-[#131824] border border-[rgba(255,255,255,0.05)] cursor-pointer hover:border-[#00FF8C] font-mono text-xs space-y-1';
+                row.onclick = () => {
+                    preview.innerHTML = `
+                        <div class="text-base font-bold text-[#00FF8C]">IMPORTANT: SentinelAI Account Restriction (${item.case_id})</div>
+                        <div class="text-[#6B7280]">To: Account_Holder_${item.case_id.replace('#', '')}@institution.com</div>
+                        <div class="p-4 rounded bg-[#131824] border border-[rgba(255,255,255,0.05)] leading-relaxed text-[#E8ECF1] whitespace-pre-wrap">Dear Addressee,
+
+Our automated financial intelligence engine flagged transaction activity on your account under regulatory mandate ${item.rule_triggered}.
+
+To comply with statutory KYC requirements, please submit the following within 24 hours:
+  [✔] 3 months of bank statements
+  [✔] Source of funds declaration form
+  [✔] Government-issued photo ID
+
+Failure to verify will result in statutory account sequestration per Terms & Conditions.
+
+Sincerely,
+SentinelAI Compliance Command</div>
+                    `;
+                };
+                row.innerHTML = `
+                    <div class="flex justify-between text-[#00FF8C] font-bold">
+                        <span>EMAIL_${item.case_id.replace('#', '')}</span>
+                        <span class="text-[10px] text-[#6B7280]">EN</span>
+                    </div>
+                    <div class="text-[#E8ECF1] truncate">Restriction Notice: ${item.case_id}</div>
+                `;
+                container.appendChild(row);
+                if (idx === 0) row.click();
+            });
+        }
+
+        // Open Detail Drawer
+        function openDrawer(caseId) {
+            const item = activeCasesList.find(c => c.case_id === caseId) || INITIAL_MOCK_CASES[0];
+            document.getElementById('drawer-case-id').innerText = item.case_id;
+            document.getElementById('drawer-evidence').innerText = item.evidence_summary || 'Target account matched SDN sanctions during transfer attempt.';
+            document.getElementById('drawer-reasoning').innerText = item.reasoning || 'Analysis of account velocity indicates automated layering. Proposing immediate asset sequestration.';
+            
+            const rBadge = document.getElementById('drawer-risk-badge');
+            const aBadge = document.getElementById('drawer-action-badge');
+            rBadge.innerText = item.risk_level || 'HIGH';
+            aBadge.innerText = item.action || 'FREEZE';
+
+            document.getElementById('drawer-ticket').innerHTML = `
+                <div class="font-bold text-[#00FF8C]">TKT-${item.case_id.replace('#', '')} // OPEN</div>
+                <div class="mt-1 text-[#E8ECF1]">Assigned: <span class="text-[#FF8C42]">compliance-director</span> | SLA: <span class="text-[#FF4444]">2 Hours</span></div>
+            `;
+
+            document.getElementById('detail-drawer').classList.remove('translate-x-full');
+        }
+
+        function closeDrawer() {
+            document.getElementById('detail-drawer').classList.add('translate-x-full');
+        }
+
+        // Open/Close New Investigation Modal
+        function openNewInvestigationModal() {
+            document.getElementById('modal-new-investigation').classList.remove('hidden');
+            document.getElementById('modal-new-investigation').classList.add('flex');
+        }
+        function closeNewInvestigationModal() {
+            document.getElementById('modal-new-investigation').classList.remove('flex');
+            document.getElementById('modal-new-investigation').classList.add('hidden');
+        }
+
+        function submitNewInvestigation() {
+            const rule = document.getElementById('new-inv-rule').value;
+            const acc = document.getElementById('new-inv-acc').value;
+            const risk = parseInt(document.getElementById('new-inv-risk').value, 10);
+            const desc = document.getElementById('new-inv-desc').value;
+
+            const newCaseId = `#${Math.floor(1000 + Math.random() * 9000)}-X`;
+            const newCase = {
+                case_id: newCaseId,
+                rule_triggered: rule,
+                risk_score: risk,
+                risk_level: risk >= 80 ? 'HIGH' : 'MEDIUM',
+                action: risk >= 80 ? 'FREEZE' : 'ESCALATE',
+                status: 'ANALYZING',
+                created_at: 'Just now',
+                evidence_summary: `Manual alert on ${acc}: ${desc}`,
+                reasoning: `Compliance officer manual override triggered investigation on ${acc}. Confidence: 1.0.`
+            };
+
+            activeCasesList.unshift(newCase);
+            renderDashboardCases(activeCasesList);
+            renderFullCasesPage(activeCasesList);
+            closeNewInvestigationModal();
+            showToast(`Manual investigation ${newCaseId} escalated successfully.`, 'low');
+
+            // Try posting to API if online
+            fetch('/api/cases', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newCase)
+            }).catch(() => {});
+        }
+
+        // Trigger Run Pipeline Overlay & SSE
+        function triggerRunPipeline() {
+            const overlay = document.getElementById('pipeline-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+
+            const titleEl = document.getElementById('sse-step-title');
+            const barEl = document.getElementById('sse-progress-bar');
+            const pctEl = document.getElementById('sse-progress-pct');
+            const sessEl = document.getElementById('sse-session-id');
+
+            const sessId = `SESS_${Math.floor(100000 + Math.random()*900000)}`;
+            sessEl.innerText = `SESSION: ${sessId}`;
+
+            const steps = [
+                { p: 20, text: "INGESTING TRANSACTION STREAM..." },
+                { p: 45, text: "RUNNING PANDAS VECTORIZED DETECTORS..." },
+                { p: 75, text: "INVOKING GROQ LPU COGNITIVE JUDGE..." },
+                { p: 90, text: "GENERATING TICKETS & EMAIL NOTICES..." },
+                { p: 100, text: "COMPLETED FORENSIC ADJUDICATION" }
+            ];
+
+            let idx = 0;
+            const interval = setInterval(() => {
+                if (idx < steps.length) {
+                    titleEl.innerText = steps[idx].text;
+                    barEl.style.width = `${steps[idx].p}%`;
+                    pctEl.innerText = `${steps[idx].p}%`;
+                    idx++;
+                } else {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        overlay.classList.remove('flex');
+                        overlay.classList.add('hidden');
+                        showToast(`Pipeline run ${sessId} completed across 142 cases.`, 'low');
+                        syncWithAPI();
+                    }, 600);
+                }
+            }, 650);
+
+            // Post to backend
+            fetch('/api/pipeline/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ input_file: 'SentinelAI/logs/transactions.jsonl' })
+            }).catch(() => {});
+        }
+
+        // Sync with API
+        async function syncWithAPI() {
+            try {
+                const res = await fetch('/api/cases');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.length > 0) {
+                        activeCasesList = data;
+                        renderDashboardCases(activeCasesList);
+                        renderFullCasesPage(activeCasesList);
+                    }
+                }
+            } catch (err) {}
+        }
+
+        // Toasts
+        function showToast(msg, level = 'low') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            let borderCol = '#00FF8C';
+            if (level === 'crit') borderCol = '#FF4444';
+            if (level === 'info') borderCol = '#3B82F6';
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-[#0F1420] border rounded p-3.5 shadow-2xl font-mono text-xs text-[#E8ECF1] flex items-center gap-3 animate-fade';
+            toast.style.borderColor = borderCol;
+            toast.innerHTML = `
+                <span class="w-2 h-2 rounded-full inline-block animate-ping" style="background-color: ${borderCol}"></span>
+                <span>${msg}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 4000);
+        }
+
+        function toggleNotifications() {
+            const el = document.getElementById('notif-dropdown');
+            el.classList.toggle('hidden');
+        }
+        function toggleUserMenu() {
+            const el = document.getElementById('user-dropdown');
+            el.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>

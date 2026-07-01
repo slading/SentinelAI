@@ -1,0 +1,18 @@
+{
+  "ticket_id": "TKT-72A4CACE",
+  "case_id": "CASE_GEO_48E78FEF",
+  "title": "[MEDIUM] AML Investigation: GEO_JURISDICTION_MISMATCH (CASE_GEO_48E78FEF)",
+  "priority": "MEDIUM",
+  "description": "Automated compliance alert triggered under rule GEO_JURISDICTION_MISMATCH. AI confidence: 94.0%. Rationale: Simulated LPU analysis detected abnormal multi-factor transaction signatures consistent with reported AML typologies.",
+  "evidence_summary": "Geo Mismatch: Account ACC_10005 (Home Jurisdiction: US) initiated 1 transaction(s) totaling $646.91 from foreign IP jurisdiction(s): NG (IPs: 185.220.101.7).",
+  "action_required": "Execute ESCALATE per FATF Rec 16 & AMLD5 Article 14",
+  "sla_hours": 24,
+  "tags": [
+    "GEO_JURISDICTION_MISMATCH",
+    "MEDIUM",
+    "ESCALATE"
+  ],
+  "assignee": "kyc-team",
+  "status": "OPEN",
+  "created_at": "2026-07-01T21:52:52.715554Z"
+}

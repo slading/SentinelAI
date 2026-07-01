@@ -1,0 +1,19 @@
+{
+  "email_id": "EMAIL_189BF215",
+  "case_id": "CASE_GEO_19AF19BF",
+  "client_name": "Account_Holder_ACC_10092",
+  "account_id": "ACC_10092",
+  "subject": "IMPORTANT: SentinelAI Account Verification Required (ACC_10092)",
+  "body": "Dear Account_Holder_ACC_10092,\n\nWe are conducting a standard compliance review on account ACC_10092. Please submit the following documentation: Bank statements (last 3 months), Source of funds declaration form, Proof of income / Employer verification, Valid Government-issued ID / Passport, Detailed explanation of flagged transactions, Legal representation details / Compliance affidavit.\n\nSincerely,\nSentinelAI Compliance Team",
+  "tone": "formal_and_protective",
+  "language": "EN",
+  "documents_requested": [
+    "Bank statements (last 3 months)",
+    "Source of funds declaration form",
+    "Proof of income / Employer verification",
+    "Valid Government-issued ID / Passport",
+    "Detailed explanation of flagged transactions",
+    "Legal representation details / Compliance affidavit"
+  ],
+  "generated_at": "2026-07-01T21:52:55.501107Z"
+}

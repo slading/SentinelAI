@@ -1,0 +1,24 @@
+{
+  "report_id": "REP_34653C8E",
+  "date": "2026-07-01",
+  "total_transactions": 1000,
+  "total_cases": 17,
+  "risk_distribution": {
+    "LOW": 0,
+    "MEDIUM": 17,
+    "HIGH": 0,
+    "CRITICAL": 0
+  },
+  "actions_breakdown": {
+    "MONITOR": 0,
+    "REQUEST_KYC": 0,
+    "FREEZE": 0,
+    "ESCALATE": 17
+  },
+  "tickets_generated": 17,
+  "emails_generated": 17,
+  "tokens_used": 54597,
+  "estimated_cost_usd": 0.037672,
+  "executive_summary": "Simulated Groq AI completion: Transaction pattern evaluated against historical parameters.",
+  "generated_at": "2026-07-01T21:52:55.624210Z"
+}
