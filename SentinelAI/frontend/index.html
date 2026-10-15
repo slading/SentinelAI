@@ -197,6 +197,8 @@
         .overview-stack { display: grid; gap: 14px; }
         .content-stack { display: grid; gap: 14px; }
         .table-wrap { width: 100%; overflow-x: auto; }
+        /* Keep the absolute, visually hidden Actions label inside the table scrollport. */
+        #investigations-table-wrap { position: relative; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         thead { background: rgba(255, 255, 255, .018); }
         th {
