@@ -1,0 +1,14 @@
+{
+  "case_id": "CASE_GEO_13826E00",
+  "rule_triggered": "Impossible-Travel",
+  "risk_score": 75.5,
+  "related_accounts": [
+    "ACC_DEMO_05"
+  ],
+  "related_transactions": [],
+  "timestamps": [
+    "2026-10-16T11:13:36.446894Z"
+  ],
+  "evidence_summary": "Account originated transactions from US and JP separated by only 32 minutes.",
+  "created_at": "2026-10-16T11:13:36.446894Z"
+}

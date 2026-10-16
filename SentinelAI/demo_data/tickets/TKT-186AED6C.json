@@ -1,0 +1,17 @@
+{
+  "ticket_id": "TKT-186AED6C",
+  "case_id": "CASE_GEO_13826E00",
+  "title": "Impossible Travel - US to JP",
+  "priority": "MEDIUM",
+  "description": "Consecutive transactions from vastly different geo-locations.",
+  "evidence_summary": "Account originated transactions from US and JP separated by only 32 minutes.",
+  "action_required": "Request selfie with ID to confirm account holder possesses the device.",
+  "sla_hours": 48,
+  "tags": [
+    "geo_mismatch",
+    "impossible_travel"
+  ],
+  "assignee": "Queue_KYC_L1",
+  "status": "OPEN",
+  "created_at": "2026-10-16T11:15:36.446894Z"
+}

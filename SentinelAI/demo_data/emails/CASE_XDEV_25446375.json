@@ -1,0 +1,12 @@
+{
+  "email_id": "EML_BEA2D139",
+  "case_id": "CASE_XDEV_25446375",
+  "client_name": "Demo User 02",
+  "account_id": "ACC_DEMO_02",
+  "subject": "Security Alert: New Login from Unrecognized Device",
+  "body": "<p>Dear Demo User 02,</p><p>Your account was accessed from an unrecognized device using a high-risk network. As a precaution, your account features have been limited.</p>",
+  "tone": "protective",
+  "language": "en",
+  "documents_requested": [],
+  "generated_at": "2026-10-16T12:54:36.446894Z"
+}

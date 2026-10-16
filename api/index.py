@@ -14,6 +14,13 @@ if str(ROOT_DIR) not in sys.path:
 # Inform components that we are running inside Vercel serverless environment
 os.environ["VERCEL"] = "1"
 
+# Explicitly target version-controlled demo fixtures on Vercel
+# Direct assignment is used instead of setdefault to ensure that Vercel dashboard variables
+# (like REHYDRATE=0) do not accidentally break the public demo configuration.
+# These fixtures provide immutable, read-only demo content for public visitors.
+os.environ["SENTINELAI_DATA_DIR"] = str(ROOT_DIR / "SentinelAI" / "demo_data")
+os.environ["SENTINELAI_REHYDRATE"] = "1"
+
 from SentinelAI.api.server import app
 
 # Export app for Vercel ASGI serverless handler

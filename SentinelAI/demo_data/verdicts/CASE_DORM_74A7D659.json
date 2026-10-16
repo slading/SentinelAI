@@ -1,0 +1,13 @@
+{
+  "case_id": "CASE_DORM_74A7D659",
+  "risk_level": "HIGH",
+  "action": "ESCALATE",
+  "confidence": 0.89,
+  "reasoning": "Sudden reactivation of a dormant account with a large outbound transfer to a new beneficiary matches typical money laundering 'smurfing' or ATO typologies.",
+  "regulatory_basis": "AMLD5 Article 11 (Monitoring of Dormant Accounts)",
+  "recommended_deadline_days": 1,
+  "processing_time_ms": 1100,
+  "model_used": "demo-precomputed",
+  "tokens_used": 480,
+  "created_at": "2026-10-16T08:18:36.446894Z"
+}

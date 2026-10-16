@@ -1,0 +1,18 @@
+{
+  "ticket_id": "TKT-7C55601D",
+  "case_id": "CASE_XDEV_25446375",
+  "title": "Credential Stuffing / ATO - Multiple Accounts",
+  "priority": "CRITICAL",
+  "description": "Cross-device rule triggered. 3 accounts accessed by single high-risk IP.",
+  "evidence_summary": "Single IP address (185.220.101.7) accessed 3 distinct accounts within 10 minutes.",
+  "action_required": "Initiate password resets for all affected accounts and freeze outbound transfers.",
+  "sla_hours": 1,
+  "tags": [
+    "ato",
+    "credential_stuffing",
+    "cross_device"
+  ],
+  "assignee": "Queue_Fraud_L3",
+  "status": "OPEN",
+  "created_at": "2026-10-16T12:54:36.446894Z"
+}

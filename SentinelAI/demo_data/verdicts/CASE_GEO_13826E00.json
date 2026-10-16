@@ -1,0 +1,13 @@
+{
+  "case_id": "CASE_GEO_13826E00",
+  "risk_level": "MEDIUM",
+  "action": "REQUEST_KYC",
+  "confidence": 0.85,
+  "reasoning": "Physically impossible travel detected between US and Japan within 32 minutes. Likely VPN usage or potential session hijacking. Additional verification required.",
+  "regulatory_basis": "FATF Recommendation 10 (Customer Due Diligence)",
+  "recommended_deadline_days": 2,
+  "processing_time_ms": 950,
+  "model_used": "demo-precomputed",
+  "tokens_used": 400,
+  "created_at": "2026-10-16T11:15:36.446894Z"
+}

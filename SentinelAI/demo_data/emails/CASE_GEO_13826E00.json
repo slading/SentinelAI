@@ -1,0 +1,15 @@
+{
+  "email_id": "EML_3EAD5EE5",
+  "case_id": "CASE_GEO_13826E00",
+  "client_name": "Demo User 05",
+  "account_id": "ACC_DEMO_05",
+  "subject": "Action Required: Verify Your Identity",
+  "body": "<p>Dear Demo User 05,</p><p>We noticed login activity from a new country. Please provide a live selfie and ID to secure your account.</p>",
+  "tone": "formal",
+  "language": "en",
+  "documents_requested": [
+    "Government ID",
+    "Selfie"
+  ],
+  "generated_at": "2026-10-16T11:15:36.446894Z"
+}
