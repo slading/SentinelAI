@@ -1,0 +1,16 @@
+# Local secrets; keep the checked-in template available.
+.env
+.env.*
+!.env.example
+
+# Python environments, bytecode, and test/build output.
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/

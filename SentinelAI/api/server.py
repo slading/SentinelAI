@@ -11,20 +11,23 @@ import logging
 import os
 import re
 import time
+import traceback
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, Type
+from typing import Annotated, Any, AsyncGenerator, Dict, List, Optional, Type
 from urllib.parse import unquote
 
 import pandas as pd
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse, FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictStr, field_validator
 
 from SentinelAI.ai.llm_inspector import LLMInspector
 from SentinelAI.ai.report_generator import ReportGenerator
+from SentinelAI.api.dependencies import require_privileged_api_key
 from SentinelAI.analytics.fraud_detector import FraudDetector
 from SentinelAI.automation.email_generator import EmailGenerator
 from SentinelAI.automation.ticket_generator import TicketGenerator
@@ -51,11 +54,185 @@ if not logger.handlers:
     logger.addHandler(handler)
 
 
+MAX_REQUEST_BODY_BYTES = 64 * 1024
+
+
+class PrivilegedRouteGuardMiddleware:
+    """Authenticate the three mutating routes before reading/parsing request bodies."""
+
+    _PROTECTED_PATHS = {
+        "/api/cases",
+        "/api/pipeline/run",
+        "/api/pipeline/stream",
+    }
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("method") == "POST":
+            path = scope.get("path", "").rstrip("/") or "/"
+            if path in self._PROTECTED_PATHS:
+                values = [
+                    value for key, value in scope.get("headers", [])
+                    if key.lower() == b"x-api-key"
+                ]
+                presented_key = (
+                    values[0].decode("latin-1") if len(values) == 1 else None
+                )
+                try:
+                    await require_privileged_api_key(presented_key=presented_key)
+                except HTTPException as exc:
+                    body = json.dumps({"detail": exc.detail}).encode("utf-8")
+                    response_headers = [
+                        (b"content-type", b"application/json"),
+                        (b"content-length", str(len(body)).encode("ascii")),
+                    ]
+                    for name, value in (exc.headers or {}).items():
+                        response_headers.append(
+                            (name.lower().encode("latin-1"), value.encode("latin-1"))
+                        )
+                    await send(
+                        {
+                            "type": "http.response.start",
+                            "status": exc.status_code,
+                            "headers": response_headers,
+                        }
+                    )
+                    await send({"type": "http.response.body", "body": body})
+                    return
+
+        await self.app(scope, receive, send)
+
+
+class RequestBodyLimitMiddleware:
+    """Bound POST bodies before FastAPI parses them, including chunked bodies."""
+
+    def __init__(self, app, max_body_bytes: int = MAX_REQUEST_BODY_BYTES):
+        self.app = app
+        self.max_body_bytes = max_body_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") != "http" or scope.get("method") != "POST":
+            await self.app(scope, receive, send)
+            return
+
+        headers = scope.get("headers", [])
+        lengths = [value for key, value in headers if key.lower() == b"content-length"]
+        transfer_encodings = [
+            value for key, value in headers if key.lower() == b"transfer-encoding"
+        ]
+        if len(lengths) > 1 or (lengths and transfer_encodings):
+            await self._send_error(send, 400, "Invalid request framing.")
+            return
+        if lengths:
+            try:
+                declared_length = int(lengths[0])
+            except (TypeError, ValueError):
+                await self._send_error(send, 400, "Invalid Content-Length.")
+                return
+            if declared_length < 0:
+                await self._send_error(send, 400, "Invalid Content-Length.")
+                return
+            if declared_length > self.max_body_bytes:
+                await self._send_error(send, 413, "Request body too large.")
+                return
+
+        buffered_messages = []
+        received_bytes = 0
+        while True:
+            message = await receive()
+            message_type = message.get("type")
+            if message_type == "http.disconnect":
+                buffered_messages.append(message)
+                break
+            if message_type != "http.request":
+                buffered_messages.append(message)
+                break
+
+            received_bytes += len(message.get("body", b""))
+            if received_bytes > self.max_body_bytes:
+                await self._send_error(send, 413, "Request body too large.")
+                return
+
+            buffered_messages.append(message)
+            if not message.get("more_body", False):
+                break
+
+        async def replay_receive():
+            if buffered_messages:
+                return buffered_messages.pop(0)
+            return await receive()
+
+        # Consume and bound the complete request before invoking FastAPI. This
+        # avoids parser/ExceptionMiddleware converting an oversized chunked body
+        # into a generic parse error and guarantees no endpoint work can begin.
+        await self.app(scope, replay_receive, send)
+
+    @staticmethod
+    async def _send_error(send, status_code: int, message: str) -> None:
+        body = json.dumps({"detail": message}).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status_code,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode("ascii")),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
+
+
 # Request Models
+SENTINELAI_DIR = Path(__file__).resolve().parent.parent
+_DEFAULT_PIPELINE_INPUT = "SentinelAI/logs/test_stream.jsonl"
+_ALLOWED_PIPELINE_INPUTS = {
+    _DEFAULT_PIPELINE_INPUT: str((SENTINELAI_DIR / "logs" / "test_stream.jsonl").resolve()),
+    "SentinelAI/logs/test_stream.csv": str((SENTINELAI_DIR / "logs" / "test_stream.csv").resolve()),
+    str((SENTINELAI_DIR / "logs" / "test_stream.jsonl").resolve()): str(
+        (SENTINELAI_DIR / "logs" / "test_stream.jsonl").resolve()
+    ),
+    str((SENTINELAI_DIR / "logs" / "test_stream.csv").resolve()): str(
+        (SENTINELAI_DIR / "logs" / "test_stream.csv").resolve()
+    ),
+}
+
+
 class PipelineRunRequest(BaseModel):
-    input_file: str = Field(
-        default="SentinelAI/logs/test_stream.jsonl",
-        description="Path to input CSV or JSONL transaction log file",
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+
+    input_file: StrictStr = Field(
+        default=_DEFAULT_PIPELINE_INPUT,
+        max_length=512,
+        description="Allow-listed bundled sample input (not an arbitrary filesystem path)",
+    )
+
+    @field_validator("input_file")
+    @classmethod
+    def validate_input_file(cls, value: str) -> str:
+        # Exact matching avoids resolving or opening caller-selected paths during
+        # request validation. The worker only receives bundled fixtures.
+        if value not in _ALLOWED_PIPELINE_INPUTS:
+            raise ValueError("input_file must identify a bundled sample dataset.")
+        return _ALLOWED_PIPELINE_INPUTS[value]
+
+
+CaseReference = Annotated[StrictStr, Field(min_length=1, max_length=128)]
+
+
+class ManualCaseRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    case_id: Optional[StrictStr] = Field(default=None, max_length=129)
+    rule_triggered: StrictStr = Field(default="Manual-Escalation", min_length=1, max_length=128)
+    risk_score: float = Field(default=85.0, ge=0.0, le=100.0)
+    related_accounts: List[CaseReference] = Field(default_factory=lambda: ["ACC_MANUAL"], max_length=50)
+    related_transactions: List[CaseReference] = Field(default_factory=list, max_length=100)
+    description: StrictStr = Field(
+        default="Manual investigation opened by compliance analyst.",
+        max_length=4000,
     )
 
 
@@ -434,17 +611,31 @@ app = FastAPI(
     description="End-to-End AML & Fraud Automation Engine powered by Pandas and Groq LPU.",
 )
 
-# Enable CORS for frontend UI interaction
+def parse_cors_origins(raw_value: Optional[str] = None) -> List[str]:
+    """Parse explicit CORS origins; wildcard origins are always discarded."""
+    if raw_value is None:
+        raw_value = os.getenv("SENTINELAI_CORS_ORIGINS", "")
+    origins = [item.strip() for item in raw_value.split(",") if item.strip()]
+    if "*" in origins:
+        logger.warning("Ignoring wildcard in SENTINELAI_CORS_ORIGINS; configure exact origins instead.")
+        origins = [origin for origin in origins if origin != "*"]
+    return list(dict.fromkeys(origins))
+
+
+# CORS is unnecessary for the same-origin public SPA. Cross-origin access is
+# opt-in by exact origin and never uses ambient credentials.
+app.add_middleware(RequestBodyLimitMiddleware, max_body_bytes=MAX_REQUEST_BODY_BYTES)
+app.add_middleware(PrivilegedRouteGuardMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=parse_cors_origins(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-API-Key"],
 )
 
 # Serve Frontend Dashboard UI
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = SENTINELAI_DIR
 FRONTEND_DIR = BASE_DIR / "frontend"
 
 
@@ -469,13 +660,38 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+# Request validation errors must not echo caller-supplied values back in 422 responses.
+@app.exception_handler(RequestValidationError)
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError):
+    safe_errors = [
+        {
+            "loc": [str(part) for part in error.get("loc", ())],
+            "msg": "Invalid request.",
+            "type": error.get("type", "value_error"),
+        }
+        for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": safe_errors})
+
+
 # Structured Global Error Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled system exception at {request.url.path}: {type(exc).__name__} - {exc}")
+    request_id = uuid.uuid4().hex
+    route = getattr(request.scope.get("route"), "path", request.url.path)
+    # Keep server-side diagnostic frames and the exception class, but not the
+    # exception message, which can contain provider details or user data.
+    stack = "".join(traceback.format_tb(exc.__traceback__)) if exc.__traceback__ else ""
+    logger.error(
+        "Unhandled exception request_id=%s route=%s exception_type=%s stack=%s",
+        request_id,
+        route,
+        type(exc).__name__,
+        stack,
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"error": "Internal Server Error", "detail": str(exc)},
+        content={"error": "Internal Server Error", "request_id": request_id},
     )
 
 
@@ -563,7 +779,11 @@ async def health_check():
 
 
 @app.post("/api/pipeline/run", response_model=PipelineRunResponse, status_code=202, summary="Trigger automated compliance pipeline")
-async def run_pipeline(payload: PipelineRunRequest, background_tasks: BackgroundTasks):
+async def run_pipeline(
+    payload: PipelineRunRequest,
+    background_tasks: BackgroundTasks,
+    _authorized: None = Depends(require_privileged_api_key),
+):
     session_id = f"SESS_{uuid.uuid4().hex[:8].upper()}"
     background_tasks.add_task(execute_pipeline_task, session_id, payload.input_file)
     return PipelineRunResponse(
@@ -574,7 +794,10 @@ async def run_pipeline(payload: PipelineRunRequest, background_tasks: Background
 
 
 @app.post("/api/pipeline/stream", summary="Live Server-Sent Events (SSE) pipeline execution stream")
-async def stream_pipeline(payload: PipelineRunRequest):
+async def stream_pipeline(
+    payload: PipelineRunRequest,
+    _authorized: None = Depends(require_privileged_api_key),
+):
     """
     Executes the compliance pipeline and streams real-time step progress to the UI via SSE.
     """
@@ -617,7 +840,10 @@ async def stream_pipeline(payload: PipelineRunRequest):
 
 
 @app.post("/api/cases", response_model=FraudCase, status_code=201, summary="Create a manual investigation case")
-async def create_case(payload: Dict[str, Any]):
+async def create_case(
+    payload: ManualCaseRequest,
+    _authorized: None = Depends(require_privileged_api_key),
+):
     """
     Opens a manual investigation case.
 
@@ -645,7 +871,7 @@ async def create_case(payload: Dict[str, Any]):
       remain valid. Reads are never re-validated, so historical records stay
       readable.
     """
-    requested_id = payload.get("case_id")
+    requested_id = payload.case_id
 
     if requested_id is not None:
         try:
@@ -676,12 +902,12 @@ async def create_case(payload: Dict[str, Any]):
             )
     new_case = FraudCase(
         case_id=case_id,
-        rule_triggered=str(payload.get("rule_triggered", "Manual-Escalation")),
-        risk_score=float(payload.get("risk_score", 85.0)),
-        related_accounts=payload.get("related_accounts", ["ACC_MANUAL"]),
-        related_transactions=payload.get("related_transactions", []),
+        rule_triggered=payload.rule_triggered,
+        risk_score=payload.risk_score,
+        related_accounts=payload.related_accounts,
+        related_transactions=payload.related_transactions,
         timestamps=[datetime.now(timezone.utc)],
-        evidence_summary=str(payload.get("description", "Manual investigation opened by compliance analyst.")),
+        evidence_summary=payload.description,
     )
     repo.save_case(new_case)
     return new_case

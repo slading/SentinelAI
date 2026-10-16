@@ -108,15 +108,21 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment Variables
-Copy the template configuration file:
+Copy the safe-default template:
 ```bash
 cp .env.example .env
 ```
-Edit `.env` and insert your API key:
+The default is `SENTINELAI_LLM_MODE=mock` and `SENTINELAI_PRIVILEGED_MODE=disabled`. Mock mode never constructs a Groq client or calls Groq, even if a Groq key is present. The public API is read-only by default.
+
+For **controlled non-production local/private testing only**, explicitly enable the API-key mode and generate a unique key of at least 32 characters:
 ```env
-GROQ_API_KEY="gsk_your_actual_api_key_here"
+ENVIRONMENT=development
+SENTINELAI_PRIVILEGED_MODE=api_key
+SENTINELAI_PRIVILEGED_API_KEY=<local-only-random-secret>
 ```
-*(Note: If omitted or left as default placeholder, SentinelAI automatically activates high-speed **Simulated LPU Mode** for zero-cost offline evaluation).*
+Pass it as the `X-API-Key` header from a trusted local client. Do not put it in frontend code, browser storage, or a public page. Production and Vercel deployments reject privileged requests regardless of these settings.
+
+To deliberately test live Groq outside the test suite, use `SENTINELAI_LLM_MODE=live` and provide `GROQ_API_KEY` through a private server-side environment. Live mode is never used by tests; do not use a placeholder key.
 
 ### 3. Launch the Terminal
 Start the API server and interactive UI:
@@ -160,11 +166,9 @@ SentinelAI comes pre-configured with `vercel.json` and `api/index.py` for immedi
    ```bash
    vercel --prod
    ```
-3. Add Environment Variable in Vercel Dashboard:
-   * Key: `GROQ_API_KEY`
-   * Value: `gsk_your_actual_api_key_here`
+3. Keep the public deployment read-only. The application defaults to `SENTINELAI_PRIVILEGED_MODE=disabled` and `SENTINELAI_LLM_MODE=mock`; do not enable private mode or configure live Groq for the public demo. All Vercel deployments reject the three privileged POST routes, even if an API key is accidentally configured.
 
-*(Note: When running on Vercel (`VERCEL=1`), all persistence paths automatically route to serverless ephemeral `/tmp/SentinelAI` memory).*
+*(Note: When running on Vercel (`VERCEL=1`), storage paths use per-instance ephemeral `/tmp/SentinelAI`; this is not durable persistence.)*
 
 ### Option B: Deployment via Docker Compose
 ```bash
@@ -185,7 +189,8 @@ docker build -t sentinelai-engine:latest .
 
 # Run container exposing port 8000
 docker run -d -p 8000:8000 --name sentinelai \
-  -e GROQ_API_KEY="gsk_your_api_key" \
+  -e SENTINELAI_PRIVILEGED_MODE=disabled \
+  -e SENTINELAI_LLM_MODE=mock \
   -v $(pwd)/SentinelAI/cases:/app/SentinelAI/cases \
   -v $(pwd)/SentinelAI/verdicts:/app/SentinelAI/verdicts \
   sentinelai-engine:latest
@@ -195,15 +200,17 @@ docker run -d -p 8000:8000 --name sentinelai \
 
 ## 📡 REST API Reference
 
+The public demo is read-only. The three POST routes below require explicit `SENTINELAI_PRIVILEGED_MODE=api_key` plus `X-API-Key` in a controlled non-production environment; they remain disabled for production and all Vercel deployments. Same-origin browser access does not require CORS, and no API key is embedded in the dashboard.
+
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/` | Serves the interactive Gotham Intelligence Terminal UI |
 | `GET` | `/api/health` | Returns system operational readiness and engine statuses |
 | `GET` | `/api/stats` | Macro KPI metrics, risk distributions, and USD token costs |
-| `POST` | `/api/pipeline/run` | Asynchronously triggers full compliance pipeline job |
-| `POST` | `/api/pipeline/stream` | Live Server-Sent Events (SSE) streaming pipeline execution |
-| `GET` | `/api/cases` | Retrieves all flagged statistical fraud cases (`List[FraudCase]`) |
-| `POST` | `/api/cases` | Opens a manual investigation case from compliance analysts |
+| `POST` | `/api/pipeline/run` | Private local testing only; disabled in every Vercel/production deployment |
+| `POST` | `/api/pipeline/stream` | Private local testing only; disabled in every Vercel/production deployment |
+| `GET` | `/api/cases` | Public read-only list of approved demo cases (`List[FraudCase]`) |
+| `POST` | `/api/cases` | Private local testing only; disabled in every Vercel/production deployment |
 | `GET` | `/api/verdicts` | Retrieves all cognitive LLM adjudications (`List[LLMVerdict]`) |
 | `GET` | `/api/tickets` | Retrieves operational workflow tickets (`List[ComplianceTicket]`) |
 | `GET` | `/api/emails` | Retrieves generated customer legal notices (`List[ClientEmail]`) |

@@ -20,7 +20,8 @@ from groq import Groq, APIConnectionError, APIStatusError, RateLimitError
 
 # Load environment variables from .env file
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+# The documented template lives at the repository root, beside README.md.
+load_dotenv(BASE_DIR.parent / ".env")
 
 # Configure structured logging
 logger = logging.getLogger("SentinelAI.GroqClient")
@@ -52,6 +53,24 @@ MODEL_METADATA: Dict[str, Dict[str, Any]] = {
 }
 
 
+def _is_placeholder_api_key(value: str) -> bool:
+    """Reject known example/mock strings when live mode is explicitly requested."""
+    normalized = value.strip().lower()
+    known_placeholders = {
+        "gsk_mock",
+        "gsk_mock_key_for_local_execution",
+        "gsk_your_actual_api_key_here",
+        "your_groq_api_key",
+        "<real-server-side-groq-key>",
+    }
+    return (
+        not normalized
+        or normalized in known_placeholders
+        or normalized.startswith(("gsk_xxxx", "gsk_your_"))
+        or normalized.startswith("<") and normalized.endswith(">")
+    )
+
+
 class GroqClient:
     """
     Production-grade AI client wrapper for Groq LPU API.
@@ -80,16 +99,30 @@ class GroqClient:
         self.timeout: int = int(groq_cfg.get("timeout", 30))
         self.max_retries: int = int(groq_cfg.get("max_retries", 3))
 
-        # API Key management
-        self.api_key: str = os.getenv("GROQ_API_KEY", "")
-        self._is_mock_key: bool = not self.api_key or self.api_key.startswith("gsk_xxxx") or self.api_key == "gsk_mock"
+        # Explicit opt-in prevents a present key or an example placeholder from
+        # silently switching the application to billable network calls.
+        self.mode = os.getenv("SENTINELAI_LLM_MODE", "mock").strip().lower()
+        if self.mode not in {"mock", "live"}:
+            raise RuntimeError("SENTINELAI_LLM_MODE must be 'mock' or 'live'.")
 
-        if not self._is_mock_key:
-            self.client: Optional[Groq] = Groq(api_key=self.api_key, timeout=self.timeout)
-            logger.info(f"Initialized Groq SDK with primary model '{self.primary_model}' and fallback '{self.fallback_model}'.")
+        self.api_key = os.getenv("GROQ_API_KEY", "").strip()
+        self._is_mock_key = self.mode == "mock"  # Kept for existing telemetry/tests.
+        if self.mode == "mock":
+            # Do not even construct the Groq SDK client in mock mode, regardless
+            # of whether a real-looking key is present in the environment.
+            self.client: Optional[Groq] = None
+            logger.info("LLM mode is mock; no Groq client has been initialized.")
         else:
-            self.client = None
-            logger.warning("No live GROQ_API_KEY detected (found mock placeholder). Running in simulated LPU mode.")
+            if _is_placeholder_api_key(self.api_key):
+                raise RuntimeError(
+                    "SENTINELAI_LLM_MODE='live' requires a non-placeholder GROQ_API_KEY."
+                )
+            self.client = Groq(api_key=self.api_key, timeout=self.timeout)
+            logger.info(
+                "Initialized Groq SDK with primary model '%s' and fallback '%s'.",
+                self.primary_model,
+                self.fallback_model,
+            )
 
         # Telemetry & Monitoring metrics
         self.tokens_used: int = 0
@@ -150,7 +183,7 @@ class GroqClient:
         temp = temperature if temperature is not None else self.default_temperature
         max_tok = max_tokens if max_tokens is not None else self.default_max_tokens
 
-        if self._is_mock_key or self.client is None:
+        if self.mode == "mock":
             return self._simulate_completion(system_prompt, user_prompt, is_json=False)
 
         models_to_attempt = [self.primary_model, self.fallback_model]
@@ -184,7 +217,14 @@ class GroqClient:
 
                 except (APIConnectionError, APIStatusError, RateLimitError, Exception) as err:
                     latency_ms = (time.perf_counter() - start_t) * 1000.0
-                    logger.error(f"Error on model '{model_name}' (attempt {attempt}): {type(err).__name__} - {err}")
+                    # Provider exception messages can contain request metadata;
+                    # record only the exception class and never the key/details.
+                    logger.error(
+                        "Error on model '%s' (attempt %s): exception_type=%s",
+                        model_name,
+                        attempt,
+                        type(err).__name__,
+                    )
 
                     if attempt < self.max_retries:
                         sleep_time = backoff_delays[attempt - 1]
@@ -209,7 +249,7 @@ class GroqClient:
         if "json" not in json_system_prompt.lower():
             json_system_prompt += "\n\nIMPORTANT: Respond ONLY with valid JSON. Do not include markdown fences or narrative prose."
 
-        if self._is_mock_key or self.client is None:
+        if self.mode == "mock":
             raw_text = self._simulate_completion(json_system_prompt, user_prompt, is_json=True)
             return json.loads(raw_text)
 
