@@ -1,0 +1,14 @@
+{
+  "email_id": "EML_17B41426",
+  "case_id": "CASE_DORM_74A7D659",
+  "client_name": "Demo User 06",
+  "account_id": "ACC_DEMO_06",
+  "subject": "Action Required: Source of Funds Verification",
+  "body": "<p>Dear Demo User 06,</p><p>To process your recent transfer, we require additional documentation regarding the source of these funds.</p>",
+  "tone": "formal",
+  "language": "en",
+  "documents_requested": [
+    "Source of Funds Proof"
+  ],
+  "generated_at": "2026-10-16T08:18:36.446894Z"
+}

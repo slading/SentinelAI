@@ -1,0 +1,13 @@
+{
+  "case_id": "CASE_VELOCITY_52104610",
+  "risk_level": "HIGH",
+  "action": "FREEZE",
+  "confidence": 0.92,
+  "reasoning": "The extreme velocity of transactions is highly indicative of automated card testing or bot-driven micro-purchases. Recommended immediate freeze.",
+  "regulatory_basis": "PSD2 Article 18 (RTS on Strong Customer Authentication)",
+  "recommended_deadline_days": 0,
+  "processing_time_ms": 1250,
+  "model_used": "demo-precomputed",
+  "tokens_used": 450,
+  "created_at": "2026-10-16T13:03:51.446894Z"
+}

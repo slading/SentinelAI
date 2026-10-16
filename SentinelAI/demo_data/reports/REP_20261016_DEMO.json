@@ -1,0 +1,22 @@
+{
+  "report_id": "REP_20261016_DEMO",
+  "date": "2026-10-16",
+  "total_transactions": 1500,
+  "total_cases": 4,
+  "risk_distribution": {
+    "MEDIUM": 1,
+    "HIGH": 2,
+    "CRITICAL": 1
+  },
+  "actions_breakdown": {
+    "REQUEST_KYC": 1,
+    "FREEZE": 2,
+    "ESCALATE": 1
+  },
+  "tickets_generated": 4,
+  "emails_generated": 4,
+  "tokens_used": 1840,
+  "estimated_cost_usd": 0.0012,
+  "executive_summary": "Public Demo Batch Execution. Highlighted 4 key typologies: Velocity Spike, ATO, Impossible Travel, and Dormant Reactivation. System successfully precomputed and halted simulated threats.",
+  "generated_at": "2026-10-16T13:13:36.446894Z"
+}

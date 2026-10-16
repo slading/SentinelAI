@@ -1,0 +1,18 @@
+{
+  "ticket_id": "TKT-4C886CF6",
+  "case_id": "CASE_VELOCITY_52104610",
+  "title": "High Velocity Card Testing - ACC_DEMO_01",
+  "priority": "HIGH",
+  "description": "Automated system detected >20 transactions under 60 seconds. LLM recommended FREEZE.",
+  "evidence_summary": "Account executed 25 small-value gaming transactions within 55 seconds.",
+  "action_required": "Review transaction legitimacy and contact cardholder.",
+  "sla_hours": 4,
+  "tags": [
+    "velocity",
+    "card_testing",
+    "gaming"
+  ],
+  "assignee": "Queue_Fraud_L2",
+  "status": "OPEN",
+  "created_at": "2026-10-16T13:04:36.446894Z"
+}

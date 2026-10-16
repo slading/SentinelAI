@@ -1,0 +1,15 @@
+{
+  "email_id": "EML_FE952690",
+  "case_id": "CASE_VELOCITY_52104610",
+  "client_name": "Demo User 01",
+  "account_id": "ACC_DEMO_01",
+  "subject": "Action Required: Suspicious Activity Detected on Your Account",
+  "body": "<p>Dear Demo User 01,</p><p>We have temporarily restricted your account due to an unusually high volume of rapid transactions. Please contact support immediately.</p>",
+  "tone": "protective",
+  "language": "en",
+  "documents_requested": [
+    "Government ID",
+    "Recent Utility Bill"
+  ],
+  "generated_at": "2026-10-16T13:04:36.446894Z"
+}
