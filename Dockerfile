@@ -7,7 +7,9 @@ FROM python:3.12-slim as base
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    ENVIRONMENT=production
+    ENVIRONMENT=production \
+    SENTINELAI_PRIVILEGED_MODE=disabled \
+    SENTINELAI_LLM_MODE=mock
 
 # Set work directory
 WORKDIR /app

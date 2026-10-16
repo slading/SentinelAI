@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import subprocess
 import sys
 import tempfile
@@ -64,9 +65,22 @@ _REPO_SNAPSHOT = {
 @pytest.fixture(scope="session")
 def child_env_base() -> Dict[str, str]:
     """Environment with serverless + live-LLM disabled, PYTHONPATH pointed at the repo."""
-    env = {k: v for k, v in os.environ.items() if k not in ("VERCEL", "GROQ_API_KEY")}
+    excluded = {
+        "VERCEL",
+        "VERCEL_ENV",
+        "GROQ_API_KEY",
+        "ENVIRONMENT",
+        "SENTINELAI_PRIVILEGED_MODE",
+        "SENTINELAI_PRIVILEGED_API_KEY",
+        "SENTINELAI_LLM_MODE",
+    }
+    env = {k: v for k, v in os.environ.items() if k not in excluded}
     env["PYTHONPATH"] = str(REPO_ROOT)
     env["PYTHONHASHSEED"] = "0"
+    env["ENVIRONMENT"] = "test"
+    env["SENTINELAI_PRIVILEGED_MODE"] = "api_key"
+    env["SENTINELAI_PRIVILEGED_API_KEY"] = secrets.token_urlsafe(32)
+    env["SENTINELAI_LLM_MODE"] = "mock"
     return env
 
 

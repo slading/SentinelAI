@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import subprocess
 import sys
 from pathlib import Path
@@ -51,23 +52,31 @@ RESULT_MARKER = "D6B_RESULT_JSON:"
 # ---------------------------------------------------------------------------
 
 def assert_simulated_llm() -> None:
-    """Hard-fail if a live Groq credential is present. D6-B makes no paid calls."""
+    """Hard-fail unless the worker is explicitly mock-only and has no Groq key."""
+    if os.getenv("SENTINELAI_LLM_MODE", "mock").strip().lower() != "mock":
+        raise SystemExit("D6-B ABORTED: SENTINELAI_LLM_MODE must be 'mock'.")
+
     sys.path.insert(0, str(REPO_ROOT))
     from SentinelAI.ai.groq_client import GroqClient
 
+    # Importing GroqClient loads the untracked root .env (if any), so inspect
+    # configuration before constructing a client or allowing a test to proceed.
+    if os.getenv("GROQ_API_KEY", "").strip():
+        raise SystemExit("D6-B ABORTED: GROQ_API_KEY must be unset for local tests.")
+
     client = GroqClient()
-    if not client._is_mock_key:
-        raise SystemExit(
-            "D6-B ABORTED: a live GROQ_API_KEY is present. "
-            "This verification must run in simulated LLM mode only."
-        )
+    if client.mode != "mock" or client.client is not None:
+        raise SystemExit("D6-B ABORTED: the Groq SDK client must not initialize in tests.")
 
 
 def build_client():
     from fastapi.testclient import TestClient
     from SentinelAI.api.server import app, repo
 
-    return TestClient(app), repo
+    # Child environments use a test-only key and simulated LLM mode. The
+    # production API never accepts private mode, regardless of this header.
+    test_key = os.environ["SENTINELAI_PRIVILEGED_API_KEY"]
+    return TestClient(app, headers={"X-API-Key": test_key}), repo
 
 
 def committed_dataset_path() -> Path:
@@ -509,13 +518,26 @@ def phase_endpoints(data_dir: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def run_child(phase: str, data_dir: str, rehydrate: str) -> Dict[str, Any]:
-    env = {k: v for k, v in os.environ.items() if k not in ("VERCEL", "GROQ_API_KEY")}
+    excluded = {
+        "VERCEL",
+        "VERCEL_ENV",
+        "GROQ_API_KEY",
+        "ENVIRONMENT",
+        "SENTINELAI_PRIVILEGED_MODE",
+        "SENTINELAI_PRIVILEGED_API_KEY",
+        "SENTINELAI_LLM_MODE",
+    }
+    env = {k: v for k, v in os.environ.items() if k not in excluded}
     env.update(
         {
             "SENTINELAI_DATA_DIR": data_dir,
             "SENTINELAI_REHYDRATE": rehydrate,
             "PYTHONPATH": str(REPO_ROOT),
             "PYTHONHASHSEED": "0",
+            "ENVIRONMENT": "test",
+            "SENTINELAI_PRIVILEGED_MODE": "api_key",
+            "SENTINELAI_PRIVILEGED_API_KEY": secrets.token_urlsafe(32),
+            "SENTINELAI_LLM_MODE": "mock",
         }
     )
     proc = subprocess.run(

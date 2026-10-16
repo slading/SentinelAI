@@ -52,6 +52,9 @@
         button { color: inherit; }
         a { color: inherit; text-decoration: none; }
         [hidden] { display: none !important; }
+        .read-only-demo { margin-bottom: 20px; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+        .read-only-demo strong { font-size: 12px; }
+        .read-only-demo p { margin: 3px 0 0; color: var(--text-secondary); font-size: 12px; overflow-wrap: anywhere; }
         :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
         ::selection { color: #f7f9fc; background: rgba(104, 146, 199, .42); }
 
@@ -1484,6 +1487,7 @@
         }
         .overview-page.route-enter .analytics-top { animation-delay: 35ms; }
         .overview-page.route-enter .analytics-bottom { animation-delay: 70ms; }
+        .button:disabled, .button:disabled:hover { color: var(--text-secondary); background: var(--surface-raised); border-color: var(--border); box-shadow: none; }
         :focus-visible { outline-color: #a9c8e6; outline-offset: 3px; }
         @media (max-width: 640px) {
             .brand { min-width: 0; gap: 0; }
@@ -1522,7 +1526,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.8-3L4 10"/><path d="M4 5v5h5M4 13a8 8 0 0 0 14.8 3L20 14"/><path d="M20 19v-5h-5"/></svg>
                             <span class="topbar-refresh-label">Refresh</span>
                         </button>
-                        <button class="button button-primary topbar-new-case" id="open-case-dialog" type="button" aria-label="New investigation">
+                        <button class="button button-primary topbar-new-case" id="open-case-dialog" type="button" disabled aria-label="New investigation (unavailable in read-only demo)" aria-describedby="read-only-demo-description" title="Case creation is unavailable in this read-only demo">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
                             <span class="topbar-new-case-label">New investigation</span>
                         </button>
@@ -1540,6 +1544,10 @@
             </header>
 
             <main class="main-content" id="main-content" tabindex="-1">
+                <aside class="read-only-demo" aria-label="Demo access">
+                    <strong>Read-only demo</strong>
+                    <p id="read-only-demo-description">Explore investigations and reports. Case creation and pipeline runs are unavailable.</p>
+                </aside>
                 <div class="api-connection-alert" id="api-connection-alert" role="alert" hidden>
                     <span class="api-connection-alert-mark" aria-hidden="true">!</span>
                     <div><strong>API connection unavailable</strong><p id="api-connection-message">The page could not reach the API. Use a page-level Retry control to try again.</p></div>
@@ -1642,7 +1650,7 @@
                 <section class="page" data-view="investigations" aria-labelledby="investigations-title" hidden>
                     <div class="page-header">
                         <div class="page-heading"><p class="eyebrow">Case management</p><h1 class="page-title" id="investigations-title" tabindex="-1">Investigations</h1><p class="page-description">Review case records currently returned by the API. Workflow status and analyst assignment are not part of the available case model.</p></div>
-                        <div class="page-actions"><button class="button button-primary" type="button" data-open-case-dialog><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New investigation</button></div>
+                        <div class="page-actions"><button class="button button-primary" type="button" data-open-case-dialog disabled aria-describedby="read-only-demo-description" title="Case creation is unavailable in this read-only demo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New investigation</button></div>
                     </div>
                     <section class="surface" aria-label="Investigation records">
                         <div class="surface-header"><div><h2 class="surface-title">Case records</h2><p class="surface-subtitle" id="investigation-count">—</p></div></div>
@@ -1681,17 +1689,16 @@
                 </section>
 
                 <section class="page" data-view="pipeline-runs" aria-labelledby="pipeline-title" hidden>
-                    <div class="page-header"><div class="page-heading"><p class="eyebrow">Batch processing</p><h1 class="page-title" id="pipeline-title" tabindex="-1">Pipeline Runs</h1><p class="page-description">Queue a batch only when you intend to start processing. The current API acknowledges background jobs but does not expose run history, progress, or completion.</p></div></div>
+                    <div class="page-header"><div class="page-heading"><p class="eyebrow">Batch processing</p><h1 class="page-title" id="pipeline-title" tabindex="-1">Pipeline Runs</h1><p class="page-description">Pipeline execution is unavailable in this read-only demo. You can explore existing investigations and reports.</p></div></div>
                     <div class="content-stack">
                         <section class="surface notice-panel" aria-labelledby="pipeline-capability-title">
-                            <div class="surface-header"><div><h2 class="surface-title" id="pipeline-capability-title">Current API capability</h2></div><span class="badge">Queue acknowledgement only</span></div>
+                            <div class="surface-header"><div><h2 class="surface-title" id="pipeline-capability-title">Current API capability</h2></div><span class="badge">Read-only demo</span></div>
                             <div class="surface-body">
-                                <p class="notice-copy" style="margin-top:0">The endpoint returns a session ID and queued status. This console will display that response only; it will not infer progress or completion.</p>
+                                <p class="notice-copy" style="margin-top:0">Sample runs are disabled in the public demo. Existing case records and deliverables remain available to review.</p>
                                 <p class="section-label">Selected input</p>
                                 <div class="read-only-value"><code>SentinelAI/logs/test_stream.jsonl</code><span class="badge badge--violet">Synthetic sample fixture</span></div>
-                                <p class="inline-note">The checked-in test stream is a synthetic fixture, not customer transaction data. The background pipeline can write output artifacts. No run starts automatically.</p>
-                                <div style="margin-top:15px"><button class="button button-primary" type="button" id="queue-sample-run">Queue sample run</button></div>
-                                <div id="run-acknowledgement" class="state-message" role="status" aria-live="polite" hidden></div>
+                                <p class="inline-note">The checked-in test stream is a synthetic fixture, not customer transaction data. It cannot be executed from this demo.</p>
+                                <div style="margin-top:15px"><button class="button button-primary" type="button" id="queue-sample-run" disabled aria-describedby="read-only-demo-description" title="Pipeline runs are unavailable in this read-only demo">Queue sample run</button></div>
                             </div>
                         </section>
                         <section class="surface notice-panel" aria-labelledby="run-history-title">
@@ -1756,27 +1763,6 @@
         </div>
     </dialog>
 
-    <dialog class="dialog" id="case-dialog" aria-labelledby="case-dialog-title">
-        <form class="dialog-form" id="case-form">
-            <div class="dialog-header"><div><h2 id="case-dialog-title">New investigation</h2><p>Creates a case using the mounted <code>/api/cases</code> endpoint. The server assigns the case ID.</p></div><button class="icon-button" type="button" data-close-case-dialog aria-label="Close new investigation dialog">×</button></div>
-            <div class="form-grid">
-                <label class="form-field"><span class="form-label">Rule or reason</span><input class="field" name="rule_triggered" maxlength="120" required autocomplete="off" placeholder="Enter the rule or reason"></label>
-                <label class="form-field"><span class="form-label">Risk score (0–100)</span><input class="field" name="risk_score" type="number" min="0" max="100" step="0.1" required inputmode="decimal" placeholder="0–100"></label>
-                <label class="form-field form-field--full"><span class="form-label">Related account ID <span class="text-muted">(optional)</span></span><input class="field" name="account_id" maxlength="120" autocomplete="off" placeholder="Account identifier"></label>
-                <label class="form-field form-field--full"><span class="form-label">Evidence summary</span><textarea class="textarea" name="description" maxlength="4000" required placeholder="Describe the evidence for this investigation"></textarea><span class="form-help">Submitted as <code>description</code>, the field accepted by the current API contract.</span></label>
-            </div>
-            <p class="dialog-message" id="case-form-message" role="alert"></p>
-            <div class="dialog-actions"><button class="button" type="button" data-close-case-dialog>Cancel</button><button class="button button-primary" type="submit" id="case-submit-button">Create case</button></div>
-        </form>
-    </dialog>
-
-    <dialog class="dialog" id="run-confirm-dialog" aria-labelledby="run-confirm-title">
-        <div class="dialog-form">
-            <div class="dialog-header"><div><h2 id="run-confirm-title">Queue synthetic sample run?</h2><p>This starts a server-side background task using the checked-in test fixture. It may write case, verdict, ticket, email, and report artifacts.</p></div></div>
-            <p class="notice-copy" style="margin:0">The API returns a queue acknowledgement only. This console cannot show whether the run later succeeds or fails.</p>
-            <div class="dialog-actions"><button class="button" type="button" id="cancel-run-button">Cancel</button><button class="button button-primary" type="button" id="confirm-run-button">Queue run</button></div>
-        </div>
-    </dialog>
     <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
 
     <script>
@@ -1794,7 +1780,6 @@
                 deliverableTab: 'tickets',
                 deliverables: { tickets: [], emails: [], reports: [] },
                 selectedDeliverable: null,
-                caseDialogReturnFocus: null,
                 loading: new Set()
             };
 
@@ -1847,11 +1832,11 @@
                 return `#/investigations/${encodeURIComponent(String(caseId))}`;
             }
 
-            async function requestJson(path, options = {}) {
+            async function requestJson(path) {
                 const response = await fetch(path, {
-                    ...options,
+                    method: 'GET',
                     credentials: 'same-origin',
-                    headers: { Accept: 'application/json', ...(options.headers || {}) }
+                    headers: { Accept: 'application/json' }
                 });
                 let payload = null;
                 try { payload = await response.json(); } catch (_) { payload = null; }
@@ -1936,7 +1921,14 @@
                 const list = sortedCases(cases).slice(0, 5);
                 if (!list.length) {
                     listWrap.hidden = true;
-                    stateBox.appendChild(makeStateMessage('empty', 'No case records yet', 'No case records in this session. Create an investigation and it appears as soon as the server confirms it.', 'Create investigation', openCaseDialog));
+                    const emptyState = makeStateMessage('empty', 'No case records yet', 'No investigations are currently available. Case creation is unavailable in this read-only demo; use Refresh to check for records.');
+                    const createButton = make('button', 'button state-action', 'Create investigation');
+                    createButton.type = 'button';
+                    createButton.disabled = true;
+                    createButton.title = 'Case creation is unavailable in this read-only demo';
+                    createButton.setAttribute('aria-describedby', 'read-only-demo-description');
+                    emptyState.lastElementChild.appendChild(createButton);
+                    stateBox.appendChild(emptyState);
                     return;
                 }
                 listWrap.hidden = false;
@@ -2193,7 +2185,7 @@
                     requestJson('/api/stats'),
                     requestJson('/api/cases'),
                     requestJson('/api/health'),
-                    requestJson('/api/reports/latest')
+                    requestJson('/api/reports')
                 ]);
                 const reachable = statsResult.status === 'fulfilled' || casesResult.status === 'fulfilled' || healthResult.status === 'fulfilled';
                 setApiState(reachable ? 'reachable' : 'unavailable');
@@ -2218,12 +2210,19 @@
                 }
 
                 clear(reportState);
-                if (reportResult.status === 'fulfilled' && reportResult.value && typeof reportResult.value === 'object') {
-                    renderLatestReport(reportResult.value);
-                } else if (reportResult.status === 'rejected' && reportResult.reason && reportResult.reason.status === 404) {
-                    state.latestReport = null;
-                    reportState.hidden = false;
-                    reportState.appendChild(makeStateMessage('empty', 'No report yet', 'No report has been generated in this session.'));
+                if (reportResult.status === 'fulfilled' && Array.isArray(reportResult.value)) {
+                    const reports = [...reportResult.value].sort((left, right) => {
+                        const leftDate = Date.parse(left.generated_at || left.date || '') || 0;
+                        const rightDate = Date.parse(right.generated_at || right.date || '') || 0;
+                        return rightDate - leftDate;
+                    });
+                    if (reports.length) {
+                        renderLatestReport(reports[0]);
+                    } else {
+                        state.latestReport = null;
+                        reportState.hidden = false;
+                        reportState.appendChild(makeStateMessage('empty', 'No report yet', 'No report has been generated in this session.'));
+                    }
                 } else {
                     state.latestReport = null;
                     reportState.hidden = false;
@@ -2687,105 +2686,6 @@
                 if (route.view === 'deliverables') loadDeliverables(state.deliverableTab);
             }
 
-            function openCaseDialog() {
-                const dialog = $('#case-dialog');
-                state.caseDialogReturnFocus = document.activeElement;
-                $('#case-form').reset();
-                $('#case-form-message').textContent = '';
-                if (typeof dialog.showModal === 'function') dialog.showModal();
-                else showToast('This browser does not support the investigation form dialog.', 'error');
-                const firstField = $('input[name="rule_triggered"]', dialog);
-                if (firstField) firstField.focus();
-            }
-
-            function closeCaseDialog() {
-                if ($('#case-dialog').open) $('#case-dialog').close();
-                const returnTarget = state.caseDialogReturnFocus;
-                if (returnTarget && returnTarget.isConnected && typeof returnTarget.focus === 'function') returnTarget.focus();
-                else $('#open-case-dialog').focus();
-            }
-
-            async function submitCase(event) {
-                event.preventDefault();
-                const form = $('#case-form');
-                if (!form.reportValidity()) return;
-                const formData = new FormData(form);
-                const accountId = String(formData.get('account_id') || '').trim();
-                const payload = {
-                    rule_triggered: String(formData.get('rule_triggered') || '').trim(),
-                    risk_score: Number(formData.get('risk_score')),
-                    description: String(formData.get('description') || '').trim(),
-                    related_accounts: accountId ? [accountId] : []
-                };
-                const submitButton = $('#case-submit-button');
-                const message = $('#case-form-message');
-                submitButton.disabled = true;
-                submitButton.textContent = 'Creating…';
-                message.textContent = '';
-                try {
-                    const created = await requestJson('/api/cases', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    $('#case-dialog').close();
-                    showToast(`Case ${created.case_id || ''} created from the API response.`);
-                    window.location.hash = routeForCase(created.case_id);
-                } catch (error) {
-                    message.textContent = `Could not create the case (${error.status || 'network error'}). No local case was added.`;
-                } finally {
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'Create case';
-                }
-            }
-
-            async function queueSampleRun() {
-                const dialog = $('#run-confirm-dialog');
-                if (typeof dialog.showModal !== 'function') {
-                    showToast('This browser does not support the run confirmation dialog.', 'error');
-                    return;
-                }
-                dialog.showModal();
-                $('#cancel-run-button').focus();
-            }
-
-            async function confirmSampleRun() {
-                const button = $('#confirm-run-button');
-                const resultBox = $('#run-acknowledgement');
-                button.disabled = true;
-                button.textContent = 'Queueing…';
-                try {
-                    const result = await requestJson('/api/pipeline/run', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ input_file: 'SentinelAI/logs/test_stream.jsonl' })
-                    });
-                    $('#run-confirm-dialog').close();
-                    clear(resultBox);
-                    resultBox.hidden = false;
-                    resultBox.className = 'state-message';
-                    resultBox.setAttribute('role', 'status');
-                    const copy = make('div');
-                    copy.append(
-                        make('strong', '', 'Queue acknowledgement received'),
-                        make('p', '', `Session ${result.session_id || 'not provided'} · ${result.status || 'status not provided'}. ${result.message || ''}`),
-                        make('p', 'inline-note', 'This confirms queueing only. The backend has no run-status endpoint, so no progress or completion is available here.')
-                    );
-                    resultBox.append(make('span', 'state-marker'), copy);
-                    setApiState('reachable');
-                } catch (error) {
-                    $('#run-confirm-dialog').close();
-                    clear(resultBox);
-                    resultBox.hidden = false;
-                    resultBox.className = 'state-message state-message--error';
-                    resultBox.setAttribute('role', 'alert');
-                    resultBox.append(make('span', 'state-marker'), make('div', '', `Could not queue the run (${error.status || 'network error'}).`));
-                } finally {
-                    button.disabled = false;
-                    button.textContent = 'Queue run';
-                }
-            }
-
             async function refreshCurrentPage() {
                 const route = state.currentRoute;
                 if (route.view === 'overview') return loadOverview();
@@ -2801,15 +2701,8 @@
             });
             $('#refresh-button').addEventListener('click', refreshCurrentPage);
             $('#case-search').addEventListener('input', () => renderInvestigations(state.cases));
-            $('#open-case-dialog').addEventListener('click', openCaseDialog);
-            $$('[data-open-case-dialog]').forEach(button => button.addEventListener('click', openCaseDialog));
-            $$('[data-close-case-dialog]').forEach(button => button.addEventListener('click', closeCaseDialog));
-            $('#case-form').addEventListener('submit', submitCase);
             $('#close-case-drawer').addEventListener('click', () => $('#case-drawer').close());
             $('#drawer-open-full').addEventListener('click', () => $('#case-drawer').close());
-            $('#queue-sample-run').addEventListener('click', queueSampleRun);
-            $('#cancel-run-button').addEventListener('click', () => $('#run-confirm-dialog').close());
-            $('#confirm-run-button').addEventListener('click', confirmSampleRun);
             $$('[data-deliverable-tab]').forEach((tab, index, tabs) => {
                 tab.addEventListener('click', () => setDeliverableTab(tab.dataset.deliverableTab));
                 tab.addEventListener('keydown', event => {

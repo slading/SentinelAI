@@ -13,8 +13,9 @@ services:
     environment:
       - APP_NAME=SentinelAI Compliance Command
       - ENVIRONMENT=production
-      # Override or pass API key via host shell or .env file
-      - GROQ_API_KEY=${GROQ_API_KEY:-gsk_mock_key_for_local_execution}
+      # Production deployment defaults: public API stays read-only and mock-only.
+      - SENTINELAI_PRIVILEGED_MODE=disabled
+      - SENTINELAI_LLM_MODE=mock
     volumes:
       # Persistent storage mounts for audit trails, cases, and deliverables
       - ./SentinelAI/logs:/app/SentinelAI/logs
