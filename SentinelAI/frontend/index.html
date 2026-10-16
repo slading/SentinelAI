@@ -166,6 +166,7 @@
         .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin: 0 0 22px; }
         .page-heading { min-width: 0; }
         .page-title { margin: 0; color: var(--text); font-size: clamp(21px, 2vw, 26px); font-weight: 630; letter-spacing: -.025em; line-height: 1.25; }
+        #case-detail-title { overflow-wrap: anywhere; }
         .page-description { max-width: 740px; margin: 7px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
         .page-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
         .eyebrow { margin: 0 0 7px; }
@@ -1784,6 +1785,7 @@
 
             const state = {
                 cases: [],
+                investigationsStatus: 'idle',
                 stats: null,
                 riskCounts: null,
                 actionCounts: null,
@@ -2240,6 +2242,7 @@
             }
 
             function renderInvestigations(cases) {
+                if (state.investigationsStatus !== 'ready') return;
                 const stateBox = $('#investigations-state');
                 const tableWrap = $('#investigations-table-wrap');
                 const body = $('#investigations-body');
@@ -2277,17 +2280,21 @@
             }
 
             async function loadInvestigations() {
+                state.investigationsStatus = 'loading';
                 const stateBox = $('#investigations-state');
                 clear(stateBox);
                 stateBox.appendChild(makeStateMessage('loading', 'Loading investigations', 'Requesting case records from the current API process.'));
                 $('#investigations-table-wrap').hidden = true;
+                $('#investigation-count').textContent = 'Loading…';
                 try {
                     const cases = await requestJson('/api/cases');
                     if (!Array.isArray(cases)) throw new Error('Unexpected case-list response');
                     state.cases = cases;
+                    state.investigationsStatus = 'ready';
                     setApiState('reachable');
                     renderInvestigations(state.cases);
                 } catch (error) {
+                    state.investigationsStatus = 'error';
                     setApiState('unavailable');
                     clear(stateBox);
                     stateBox.appendChild(makeStateMessage('error', 'Investigations unavailable', 'The case list could not be loaded from the API.', 'Retry', loadInvestigations));
@@ -2410,11 +2417,12 @@
                     optionalRequest('/api/tickets'),
                     optionalRequest(`/api/emails/${encodedId}`)
                 ]);
-                if (caseResult && caseResult.__error) {
+                if (!caseResult || typeof caseResult !== 'object' || Array.isArray(caseResult) || caseResult.__error) {
+                    const notFound = caseResult && caseResult.__error && caseResult.__error.status === 404;
                     clear(stateBox);
-                    const message = caseResult.__error.status === 404 ? 'No matching case was returned by the API.' : 'The case could not be loaded from the API.';
+                    const message = notFound ? 'No matching case was returned by the API.' : 'The case could not be loaded from the API.';
                     stateBox.appendChild(makeStateMessage('error', 'Case unavailable', message, 'Retry', () => loadCaseDetail(caseId)));
-                    setApiState(caseResult.__error.status === 404 ? 'reachable' : 'unavailable');
+                    setApiState(notFound ? 'reachable' : 'unavailable');
                     return;
                 }
                 clear(stateBox);
