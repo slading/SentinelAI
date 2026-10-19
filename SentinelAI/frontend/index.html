@@ -1847,6 +1847,15 @@
                 return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
             }
 
+            // A zero-day deadline means "act now"; it is not a missing value.
+            function formatDeadline(value) {
+                if (value === null || value === undefined || value === '') return 'Not provided';
+                const days = Number(value);
+                if (!Number.isFinite(days)) return 'Not provided';
+                if (days <= 0) return 'Immediate';
+                return days === 1 ? '1 day' : `${days} days`;
+            }
+
             function routeForCase(caseId) {
                 return `#/investigations/${encodeURIComponent(String(caseId))}`;
             }
@@ -2398,7 +2407,7 @@
                     ['Confidence', verdict.confidence != null && Number.isFinite(Number(verdict.confidence)) ? `${(Number(verdict.confidence) * 100).toFixed(1)}%` : 'Not provided'],
                     ['Model', verdict.model_used || 'Not provided'],
                     ['Regulatory basis', verdict.regulatory_basis || 'Not provided'],
-                    ['Recommended deadline', verdict.recommended_deadline_days == null ? 'Not provided' : `${verdict.recommended_deadline_days} days`],
+                    ['Recommended deadline', formatDeadline(verdict.recommended_deadline_days)],
                     ['Tokens used', verdict.tokens_used == null ? 'Not provided' : formatInteger(verdict.tokens_used)],
                     ['Created', formatDate(verdict.created_at)]
                 ]);

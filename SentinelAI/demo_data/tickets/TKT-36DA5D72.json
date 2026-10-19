@@ -6,13 +6,13 @@
   "description": "Account inactive 180+ days transferring $8,500. Escalate for source of funds review.",
   "evidence_summary": "Account dormant for >180 days suddenly initiated high-value transfer ($8,500).",
   "action_required": "Investigate beneficiary details and request Source of Funds (SOF).",
-  "sla_hours": 24,
+  "sla_hours": 8,
   "tags": [
     "dormant_account",
     "high_value",
     "aml"
   ],
-  "assignee": "Queue_AML_L2",
+  "assignee": "ops-team",
   "status": "OPEN",
   "created_at": "2026-10-16T08:18:36.446894Z"
 }
