@@ -4,7 +4,7 @@
   "client_name": "Demo User 02",
   "account_id": "ACC_DEMO_02",
   "subject": "Security Alert: New Login from Unrecognized Device",
-  "body": "<p>Dear Demo User 02,</p><p>Your account was accessed from an unrecognized device using a high-risk network. As a precaution, your account features have been limited.</p>",
+  "body": "<p>Dear Demo User 02,</p><p>We detected a login to your account from an unrecognized device on a high-risk network. Please review this activity and contact support to secure your account.</p>",
   "tone": "protective",
   "language": "en",
   "documents_requested": [],

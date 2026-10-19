@@ -22,13 +22,15 @@ This repository contains **one codebase** that runs in **two modes**. They do no
 | Aspect | **Public Vercel demo** | **Local / private run** |
 | :--- | :--- | :--- |
 | **What it is** | A read-only dashboard over precomputed fixtures | The full pipeline, executed by you on your machine |
-| **Data** | 4 synthetic cases + 4 verdicts + 4 tickets + 4 notices + 1 report (17 JSON fixtures in `SentinelAI/demo_data/`) | Bundled synthetic stream (`SentinelAI/logs/test_stream.jsonl`) or your own JSONL/CSV |
+| **Data** | 4 synthetic cases + 4 verdicts + 4 tickets + 4 notices + 1 report (17 curated JSON fixtures in `SentinelAI/demo_data/`) | Bundled synthetic stream (`SentinelAI/logs/test_stream.jsonl`) or your own JSONL/CSV |
 | **Detection** | None at request time — fixtures are precomputed | Deterministic Pandas rules run for real |
 | **LLM** | No LLM call is reachable: the pipeline routes are blocked and the stored verdicts are fixtures labelled `model_used: "demo-precomputed"`. `SENTINELAI_LLM_MODE` defaults to `mock` | Mock by default; live Groq is an explicit opt-in |
 | **Writes** | Impossible. `POST /api/cases`, `/api/pipeline/run`, `/api/pipeline/stream` return **404** | Available only with an explicit non-production key setup |
 | **Storage** | Bundled fixtures via `SENTINELAI_DATA_DIR`; `/tmp` write paths are per-instance and non-durable | Local JSON files under `SentinelAI/` (or `SENTINELAI_DATA_DIR`) |
 
 > **SentinelAI is a demonstration and engineering workbench, not a compliance system of record.** It is not production-ready, has not been validated against any regulator, is not designed for real customer data, and does not deliver emails or open Jira issues. See the **Not production-ready** section below.
+
+> **Demo fixture provenance.** The 17 files in `SentinelAI/demo_data/` are a curated, hand-composed scenario for the four typologies — they are **not** regenerated from `SentinelAI/logs/test_stream.jsonl` (500 rows, different accounts). Case IDs, case risk scores (chosen to match each verdict's severity), verdict narratives and the report's 1,500-transaction batch are fixed demo content. Ticket priority, assignee and SLA follow `QUEUE_ROUTING_RULES` in `automation/ticket_generator.py`. The CLI and the privileged pipeline routes are the paths that produce fresh output from data.
 
 ---
 
@@ -202,14 +204,22 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-The template is safe by default:
+The template is safe by default and points the console at the same **17 read-only
+fixtures** the public demo serves:
 
 ```env
 SENTINELAI_PRIVILEGED_MODE=disabled
 SENTINELAI_LLM_MODE=mock
+SENTINELAI_DATA_DIR=SentinelAI/demo_data
 ```
 
 Mock mode never constructs a Groq client and makes no network calls. The public API is read-only.
+
+> `SENTINELAI_DATA_DIR` is what makes a fresh clone show the demo (4 cases, 4 verdicts,
+> 4 tickets, 4 notices, 1 report); rehydration is already on by default for local runs.
+> To browse artifacts you generate yourself under
+> `SentinelAI/{cases,verdicts,tickets,emails,reports}`, remove that line or set
+> `SENTINELAI_DATA_DIR=SentinelAI`.
 
 ### 3. Start the server
 
@@ -219,7 +229,10 @@ python3 main.py --serve
 
 Open **`http://localhost:8000/`** for the console, or **`http://localhost:8000/docs`** for the OpenAPI schema.
 
-> **Start-up storage note:** locally, records are rehydrated from `SentinelAI/{cases,verdicts,tickets,emails,reports}` by default. Because the repository ships example artifacts, a fresh clone will show existing records — and a few legacy ticket files that no longer match the current schema are skipped with a warning. To start from a clean store:
+> **Start-up storage note:** records are rehydrated from `SENTINELAI_DATA_DIR` at
+> start-up. The default above serves the precomputed demo; the CLI still writes its
+> own output into `SentinelAI/{tickets,emails,reports}`. To start from a completely
+> empty store:
 >
 > ```bash
 > SENTINELAI_DATA_DIR=/tmp/sentinelai-scratch SENTINELAI_REHYDRATE=0 python3 main.py --serve
@@ -380,7 +393,6 @@ SentinelAI/                        # repository root
 ├── .env.example
 ├── requirements.txt
 ├── README.md
-├── uploads/screen.png             # stale concept mockup (not used by the app)
 ├── tests/
 │   ├── test_api_security.py       # auth, limits, CORS, mock-mode guarantees
 │   ├── test_d7a_demo_fixtures.py  # public demo fixture integrity
@@ -399,8 +411,6 @@ SentinelAI/                        # repository root
     ├── cases/ verdicts/ tickets/ emails/ reports/   # local artifact output
     └── logs/                      # test_stream.{jsonl,csv}, audit_logger.py, audit.log
 ```
-
-`uploads/screen.png` is an **outdated concept mockup** (it shows non-existent live metrics such as 1.28 M transactions and an active "Run pipeline" control) and does not reflect the shipped read-only console.
 
 ---
 

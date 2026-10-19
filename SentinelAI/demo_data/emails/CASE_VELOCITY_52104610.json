@@ -4,7 +4,7 @@
   "client_name": "Demo User 01",
   "account_id": "ACC_DEMO_01",
   "subject": "Action Required: Suspicious Activity Detected on Your Account",
-  "body": "<p>Dear Demo User 01,</p><p>We have temporarily restricted your account due to an unusually high volume of rapid transactions. Please contact support immediately.</p>",
+  "body": "<p>Dear Demo User 01,</p><p>We detected an unusually high volume of rapid transactions on your account. Please contact support immediately so we can verify this activity.</p>",
   "tone": "protective",
   "language": "en",
   "documents_requested": [
