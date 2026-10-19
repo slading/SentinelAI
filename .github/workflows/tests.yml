@@ -16,7 +16,6 @@ jobs:
       ENVIRONMENT: test
       SENTINELAI_LLM_MODE: mock
       SENTINELAI_PRIVILEGED_MODE: disabled
-      SENTINELAI_DATA_DIR: ${{ runner.temp }}/sentinelai-data
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -25,6 +24,8 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt pytest
       - name: Run regression tests
+        env:
+          SENTINELAI_DATA_DIR: ${{ runner.temp }}/sentinelai-data
         run: >-
           python -m pytest -v
           tests/test_api_security.py
